@@ -23,10 +23,10 @@ A good leasson starts with a good preparation
 As we meet in the classroom we wish to spend our precious time on interesting development challenges rather than machine setup. Make sure to prepare your machine aforehand. Should you encounter any issue - please open an issue within this repo and I'll be sure to assist shortly
 
 ### ✔ 1 Install Node.JS >= v12.x
-Install Node.JS LTS (any version that is beyond v12) [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. Alternativelly use nvm
+Install Node.JS LTS (any version that is beyond v12) [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. Alternativelly [use nvm](https://github.com/nvm-sh/nvm)
 
 ### ✔ 2 Ensure Node is installed correctly
-Open your favourite terminal (Windows: command prompt) and type 'NPM verson'. The output should confirm that version 8.9.x is indeed installed
+Open your favourite terminal (Windows: command prompt) and type 'NPM verson'. The output should confirm that installed versionis indeed installed
 
 ### ✔ 3 Install IDE (editor)
 I highly recommend using VSCode editor in the course as it's lightweight and has a very rich plugins eco-sysem that we might use during our excercise. Simply visit the [downloads site](https://code.visualstudio.com/download) and choose the edition that suits your operations system. You may opt for any other editor that supports Node debugging and intellisense
@@ -35,7 +35,7 @@ I highly recommend using VSCode editor in the course as it's lightweight and has
 Use git to fork this repo into your computer. You may use the top-right corner 'Fork' button
 
 ### ✔ 5 Install dependencies
-Navigate to the repository you've just cloned, **change your working directory to 'getting-started'** (cd getting-started) and install dependencies
+Navigate to the repository you've just cloned and install dependencies:
 
 ```
 npm i
@@ -45,7 +45,7 @@ npm i
 Run the following command and ensure that the output confirms that all the test succeeded
 
 ```
-npm run test:exercise
+npm run test
 
 ```
 
@@ -63,5 +63,5 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 ### ✔ 8 Prepare your computer for a video call
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTExODA3MzgwMDFdfQ==
+eyJoaXN0b3J5IjpbLTE1NjUyNjk5MjhdfQ==
 -->
