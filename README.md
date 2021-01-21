@@ -29,8 +29,11 @@ Install Node.JS LTS (any version that is beyond v12) [from this website](https:/
 Open your favourite terminal (Windows: command prompt) and type 'NPM verson'. The output should confirm that installed versionis indeed installed
 
 ### ✔ 3 Install Docker
-Since we will use real databases using dock
+Since we will use real databases using docker-compose - Docker must be installed on your machine. Visit the download site, download and install. Verify that the installation went successful by running the following hello-world container:
 
+``````
+docker run hello-world
+```
 
 ### ✔ 3 Install IDE (editor)
 I highly recommend using VSCode editor in the course as it's lightweight and has a very rich plugins eco-sysem that we might use during our excercise. Simply visit the [downloads site](https://code.visualstudio.com/download) and choose the edition that suits your operations system. You may opt for any other editor that supports Node debugging and intellisense
@@ -67,5 +70,5 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 ### ✔ 8 Prepare your computer for a video call
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzUyMDYzMTkwXX0=
+eyJoaXN0b3J5IjpbMTExODQ5NzA5Ml19
 -->
