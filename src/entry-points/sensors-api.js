@@ -2,7 +2,7 @@ const express = require("express");
 const util = require("util");
 const axios = require("axios");
 const bodyParser = require("body-parser");
-const sensorsDal = require("./sensors-dal");
+const sensorsDal = require("../data-access/sensors-in-memory-repository");
 
 const initializeAPI = () => {
   const expressApp = express();
@@ -18,10 +18,7 @@ const initializeAPI = () => {
   // add new event
   router.post("/sensor-events", async (req, res, next) => {
     console.log(`Sensors events was called to add new event ${util.inspect(req.body)}`);
-    const {
-      temperature,
-      category
-    } = req.body;
+    const { temperature, category } = req.body;
 
     // validation
     if (!temperature || !category) {
@@ -29,7 +26,7 @@ const initializeAPI = () => {
     }
 
     if (temperature > 50 || (category === "kids-room" && temperature > 30)) {
-      const notificationRequest = (await axios.get(`http://localhost/notification`)).data;
+      const notificationRequest = (await axios.get("http://localhost/notification")).data;
     }
 
     // save to DB (Caution: simplistic code without layers and validation)
@@ -52,5 +49,5 @@ const initializeAPI = () => {
 };
 
 module.exports = {
-  initializeAPI
+  initializeAPI,
 };

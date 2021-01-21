@@ -2,10 +2,10 @@
 // ✅ Whenever you see this icon, there's a TASK for you
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
-const request = require("supertest");
+const request = require('supertest');
 
-const { initializeAPI } = require("../sensors-api");
-const nock = require("nock");
+const nock = require('nock');
+const { initializeAPI } = require('../src/entry-points/sensors-api');
 
 let expressApp;
 
@@ -15,30 +15,30 @@ beforeAll(() => {
 
 beforeEach(() => {
   // 📗 Reading exercise: Why is this needed 👇? Read about npm/nock
-  nock("http://localhost").get("/notification").reply(200, {
+  nock('http://localhost').get('/notification').reply(200, {
     success: true,
   });
 });
 
-describe("Sensors test", () => {
+describe('Sensors test', () => {
   // ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
   // 💡 TIP: Down below, there is an example event schema
-  test("When category is not specified, should get http 400 error", async () => {
-    //Arrange
+  test('When category is not specified, should get http 400 error', async () => {
+    // Arrange
     const eventToAdd = {
       temperature: 20,
-      name: "Thermostat-temperature", //This must be unique
-      color: "Green",
-      weight: "80 gram",
-      status: "active",
+      name: 'Thermostat-temperature', // This must be unique
+      color: 'Green',
+      weight: '80 gram',
+      status: 'active',
       // 💡 TIP: Consider explicitly specify that category is undefined
     };
 
-    //Act
+    // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
-    //Assert
+    // Assert
     // 💡 TIP: verify that status is 400
   });
 

@@ -1,8 +1,7 @@
 const events = [];
 
-//a very simplistic DAL, replace with real MongoDB when my calendar will permit
+// a very simplistic DAL, replace with real MongoDB when my calendar will permit
 module.exports = class sensorsDAL {
-  constructor() {}
 
   async addSensorsEvent(event) {
     return new Promise((resolve, reject) => {
@@ -14,7 +13,7 @@ module.exports = class sensorsDAL {
     });
   }
 
-  async getEvents(category, sortBy = "name") {
+  async getEvents(category, sortBy = 'name') {
     return new Promise((resolve, reject) => {
       setImmediate(() => {
         console.log(category);
