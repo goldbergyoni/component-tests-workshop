@@ -29,7 +29,7 @@ describe('Sensors test', () => {
       temperature: 20,
       name: 'Thermostat-temperature', // This must be unique
       color: 'Green',
-      weight: '80 gram',
+      weight: '80',
       status: 'active',
       // 💡 TIP: Consider explicitly specify that category is undefined
     };

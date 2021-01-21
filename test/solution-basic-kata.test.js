@@ -28,7 +28,7 @@ describe('Order API #component', () => {
         temperature: undefined,
         name: 'Thermostat-temperature', // This must be unique
         color: 'Green',
-        weight: '80 gram',
+        weight: '80',
         status: 'active',
         category: 'no-temperature-test',
       };
@@ -51,7 +51,7 @@ describe('Order API #component', () => {
         longtitude: 80,
         latitude: 120,
         name: 'Thermostat',
-        weight: '80 gram',
+        weight: '80',
         status: 'active',
       };
 
@@ -66,18 +66,19 @@ describe('Order API #component', () => {
 
     test('When sorting by name, then results are sorted properly', async () => {
       // Arrange
+      const uniqueCategory = `unique-category-for-sort - ${Math.random()}`;
       const secondEvent = {
-        category: 'unique-category-for-sort',
+        category: uniqueCategory,
         temperature: 70,
         name: 'def-this-should-come-second',
-        weight: '80 gram',
+        weight: 80,
         status: 'active',
       };
       const firstEvent = {
-        category: 'unique-category-for-sort',
+        category: uniqueCategory,
         temperature: 70,
         name: 'abc-this-should-come-first',
-        weight: '80 gram',
+        weight: 80,
         status: 'active',
       };
       await request(expressApp).post('/sensor-events').send(secondEvent);
@@ -85,7 +86,7 @@ describe('Order API #component', () => {
 
       // Act
       const receivedResult = await request(expressApp).get(
-        '/sensor-events/unique-category-for-sort/name',
+        `/sensor-events/${uniqueCategory}/name`,
       );
 
       // Assert

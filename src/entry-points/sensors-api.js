@@ -1,8 +1,8 @@
-const express = require("express");
-const util = require("util");
-const axios = require("axios");
-const bodyParser = require("body-parser");
-const sensorsDal = require("../data-access/sensors-in-memory-repository");
+const express = require('express');
+const util = require('util');
+const axios = require('axios');
+const bodyParser = require('body-parser');
+const SensorsDal = require('../data-access/sensors-repository');
 
 const initializeAPI = () => {
   const expressApp = express();
@@ -10,14 +10,16 @@ const initializeAPI = () => {
   expressApp.use(
     bodyParser.urlencoded({
       extended: true,
-    })
+    }),
   );
   expressApp.use(bodyParser.json());
   expressApp.listen();
 
   // add new event
-  router.post("/sensor-events", async (req, res, next) => {
-    console.log(`Sensors events was called to add new event ${util.inspect(req.body)}`);
+  router.post('/sensor-events', async (req, res, next) => {
+    console.log(
+      `Sensors events was called to add new event ${util.inspect(req.body)}`,
+    );
     const { temperature, category } = req.body;
 
     // validation
@@ -25,25 +27,30 @@ const initializeAPI = () => {
       return res.status(400).end();
     }
 
-    if (temperature > 50 || (category === "kids-room" && temperature > 30)) {
-      const notificationRequest = (await axios.get("http://localhost/notification")).data;
+    if (temperature > 50 || (category === 'kids-room' && temperature > 30)) {
+      const notificationRequest = (
+        await axios.get('http://localhost/notification')
+      ).data;
     }
 
     // save to DB (Caution: simplistic code without layers and validation)
-    const sensorsRepository = new sensorsDal();
+    const sensorsRepository = new SensorsDal();
     const DBResponse = await sensorsRepository.addSensorsEvent(req.body);
 
     return res.json(DBResponse);
   });
 
   // get existing events
-  router.get("/sensor-events/:category/:sortBy", async (req, res, next) => {
-    const sensorsRepository = new sensorsDal();
-    const sensorsToReturn = await sensorsRepository.getEvents(req.params.category, req.params.sortBy);
+  router.get('/sensor-events/:category/:sortBy', async (req, res, next) => {
+    const sensorsRepository = new SensorsDal();
+    const sensorsToReturn = await sensorsRepository.getEvents(
+      req.params.category,
+      req.params.sortBy,
+    );
     res.json(sensorsToReturn);
   });
 
-  expressApp.use("/", router);
+  expressApp.use('/', router);
 
   return expressApp;
 };
