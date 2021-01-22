@@ -24,8 +24,8 @@ Let's go over a short checklist to ensure that this workshop will be benefical f
 
 - You have at least 1 year of experience in JavaScript programming
 - You have at least 1 year of experience in Node.js and database programming
-- You know what is the purpose of testing and wrote at least few tests in the past. If not, this is a great video to start with - Please watch and try writing 
-
+- You know what is the purpose of testing and wrote at least few tests in the past. If not, [this is a great video to start with](https://www.youtube.com/watch?v=r9HdJ8P6GQI) - Please watch and try writing few tests
+- Your computer has at least 16gb of RAM
 
 
 ## Preparation
@@ -34,9 +34,10 @@ As we meet in the classroom we wish to spend our precious time on interesting de
 
 ❗️ If one of these steps fail - Please create an issue here at least 24 hours before the workshop
 
-### ✔ 1 Install Node.JS >= v12.x
+### ✔ 1 Install Node.JS 12.8
 
-Install Node.JS LTS (any version that is beyond v12) [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. Alternativelly [use nvm](https://github.com/nvm-sh/nvm)
+Install Node.JS version 12.8.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all beon the same page. 
+Alternativelly [use nvm](https://github.com/nvm-sh/nvm)
 
 ### ✔ 2 Ensure Node is installed correctly
 
@@ -93,5 +94,5 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwMDk2MTk2NzUsNzMyMjgwMDkzXX0=
+eyJoaXN0b3J5IjpbNTQyNjA4NjE0LDczMjI4MDA5M119
 -->
