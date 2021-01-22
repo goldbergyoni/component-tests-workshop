@@ -20,7 +20,7 @@ A good leasson starts with a good preparation
 
 ## Prerequisites
 
-Let's go over a short checklist to ensure that this workshop will be benefical for you. Please let us know in advance if one of the following doesn't hold true:
+Let's go over a short checklist to ensure that this workshop will be benefical for you. ❗️Please let us know in advance if one of the following doesn't hold true:
 
 - You have at least 1 year of experience in JavaScript programming
 - You have at least 1 year of experience in Node.js and database programming
@@ -36,8 +36,14 @@ As we meet in the classroom we wish to spend our precious time on interesting de
 
 ### ✔ 1 Install Node.JS 12.8
 
-Install Node.JS version 12.8.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all beon the same page. 
-Alternativelly [use nvm](https://github.com/nvm-sh/nvm)
+Install Node.JS version 12.8.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all be on the same page. 
+
+Alternativelly [use nvm](https://github.com/nvm-sh/nvm), install it and then after cloning this repo run:
+
+```
+nvm install
+nvm use
+```
 
 ### ✔ 2 Ensure Node is installed correctly
 
@@ -94,5 +100,5 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTQyNjA4NjE0LDczMjI4MDA5M119
+eyJoaXN0b3J5IjpbLTE3NzE4ODYxMTcsNzMyMjgwMDkzXX0=
 -->
