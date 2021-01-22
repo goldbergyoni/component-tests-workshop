@@ -18,6 +18,13 @@ This repo shows the immense power of narrow integration tests, also known as 'co
 # Let's get prepared for the workshop
 A good leasson starts with a good preparation
 
+## Prerequisites
+
+Let's go over a short checklist to ensure that this workshop will be benefical for you. 
+
+- 
+
+
 
 ## Preparation
 
@@ -84,5 +91,5 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzMyMjgwMDkzXX0=
+eyJoaXN0b3J5IjpbLTEzMzgyNTg5NDgsNzMyMjgwMDkzXX0=
 -->
