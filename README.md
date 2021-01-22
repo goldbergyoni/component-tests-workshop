@@ -9,14 +9,14 @@
 
 # Intro
 
-This repo shows the immense power of narrow integration tests, also known as 'component test', including examples and how to set them up properly. This might make a dramatic impact on your testing effort and success 🚀. Warning: You might fall in love with testing 💚
+This workshop shows the immense power of narrow integration tests, also known as 'component test. This might make a dramatic impact on your testing effort and success 🚀. Warning: You might fall in love with testing 💚
 
 ![Header](/graphics/component-diagram.jpg "Component Tests")
 
 <br/><br/><br/>
 
 # Let's get prepared for the workshop
-A good leasson starts with a good preparation
+A good leasson starts with a good preparation, your attention is needed here
 
 ## Prerequisites
 
@@ -34,7 +34,7 @@ As we meet in the classroom we wish to spend our precious time on interesting de
 
 ❗️ If one of these steps fail - Please create an issue here at least 24 hours before the workshop
 
-### ✔ 1 Install Node.JS 12.8
+### ✅ 1 Install Node.JS 12.8
 
 Install Node.JS version 12.8.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all be on the same page. 
 
@@ -45,11 +45,11 @@ nvm install
 nvm use
 ```
 
-### ✔ 2 Ensure Node is installed correctly
+### ✅ 2 Ensure Node is installed correctly
 
 Open your favourite terminal (Windows: command prompt) and type 'NPM verson'. The output should confirm that installed versionis indeed installed
 
-### ✔ 3 Install Docker
+### ✅ 3 Install Docker
 
 Since we will use real databases using docker-compose - Docker must be installed on your machine. Visit the download site, download and install. Verify that the installation went successful by running the following hello-world container:
 
@@ -59,15 +59,15 @@ docker run hello-world
 
 Please ensure that no error messages were presented during the execution
 
-### ✔ 4 Install IDE (editor)
+### ✅ 4 Install IDE (editor)
 
 I highly recommend using VSCode editor in the course as it's lightweight and has a very rich plugins eco-sysem that we might use during our excercise. Simply visit the [downloads site](https://code.visualstudio.com/download) and choose the edition that suits your operations system. You may opt for any other editor that supports Node debugging and intellisense
 
-### ✔ 4 Fork this repo
+### ✅ 4 Fork this repo
 
 Use git to fork this repo into your computer. You may use the top-right corner 'Fork' button
 
-### ✔ 5 Install dependencies
+### ✅ 5 Install dependencies
 
 Navigate to the repository you've just cloned and install dependencies:
 
@@ -100,5 +100,6 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3NzE4ODYxMTcsNzMyMjgwMDkzXX0=
+eyJoaXN0b3J5IjpbMTY3MjUzMTgyMywtMTc3MTg4NjExNyw3Mz
+IyODAwOTNdfQ==
 -->
