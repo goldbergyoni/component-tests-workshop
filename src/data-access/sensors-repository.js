@@ -5,7 +5,7 @@ let repository;
 let sensorEventModel;
 
 module.exports = class SensorsRepository {
-  constructor() {
+  async initialize() {
     if (!repository) {
       repository = new Sequelize(
         'sensors',
@@ -13,7 +13,7 @@ module.exports = class SensorsRepository {
         'myuserpassword',
         sequelizeConfig,
       );
-      // repository.sync({ force: true });
+
       sensorEventModel = repository.define('Sensor', {
         id: {
           type: Sequelize.INTEGER,
@@ -46,16 +46,19 @@ module.exports = class SensorsRepository {
         },
       });
     }
+
+    await repository.sync();
   }
 
   async addSensorsEvent(event) {
+    await this.initialize();
     return await sensorEventModel.create(event);
   }
 
-  async getEvents(category, soryBy) {
-    console.log(category);
+  async getEvents(category, sortBy) {
+    await this.initialize();
     return await sensorEventModel.findAll({
-      order: [['name', 'ASC']],
+      order: [[sortBy, 'ASC']],
       where: {
         category,
       },
