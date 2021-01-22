@@ -75,7 +75,7 @@ Navigate to the repository you've just cloned and install dependencies:
 npm i
 ```
 
-### ✔ 6 Ensure testing works
+### ✅ 6 Ensure testing works
 
 Run the following command and ensure that the output confirms that all the test succeeded
 
@@ -84,7 +84,7 @@ npm run test
 
 ```
 
-### ✔ 7 Polish Your JS Skills
+### ✅ 7 Polish Your JS Skills
 
 Learning Node requires to be familiar with Javascript. Beside mastering the basic principals of JS, it's recommended to get acquaintance with the following concepts that are highly related to Node.JS:
 <br/>
@@ -96,10 +96,10 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 <br/>
 [Classes](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)
 
-### ✔ 8 Prepare your computer for a video call
+### ✅ 8 Prepare your computer for a video call
 
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY3MjUzMTgyMywtMTc3MTg4NjExNyw3Mz
-IyODAwOTNdfQ==
+eyJoaXN0b3J5IjpbLTEwNTU3ODkwLC0xNzcxODg2MTE3LDczMj
+I4MDA5M119
 -->
