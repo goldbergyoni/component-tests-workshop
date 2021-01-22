@@ -24,7 +24,7 @@ Let's go over a short checklist to ensure that this workshop will be benefical f
 
 - You have at least 1 year of experience in JavaScript programming
 - You have at least 1 year of experience in Node.js and database programming
-- You know what is the purpose of testing and wrote few tests in the past
+- You know what is the purpose of testing and wrote at least few tests in the past. If not, this is a great video to start with - Please watch and try writing 
 
 
 
@@ -93,5 +93,5 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTcxMTYwNDY5MSw3MzIyODAwOTNdfQ==
+eyJoaXN0b3J5IjpbLTIwMDk2MTk2NzUsNzMyMjgwMDkzXX0=
 -->
