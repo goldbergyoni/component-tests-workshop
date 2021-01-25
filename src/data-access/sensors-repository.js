@@ -1,11 +1,11 @@
 const Sequelize = require('sequelize');
-const sequelizeConfig = require('./db-configuration');
+const sequelizeConfig = require('./config/config');
 
 let repository;
 let sensorEventModel;
 
 module.exports = class SensorsRepository {
-  async initialize() {
+  constructor() {
     if (!repository) {
       repository = new Sequelize(
         'sensors',
@@ -14,7 +14,7 @@ module.exports = class SensorsRepository {
         sequelizeConfig,
       );
 
-      sensorEventModel = repository.define('Sensor', {
+      sensorEventModel = repository.define('SensorEvent', {
         id: {
           type: Sequelize.INTEGER,
           primaryKey: true,
@@ -26,8 +26,10 @@ module.exports = class SensorsRepository {
         color: {
           type: Sequelize.STRING,
         },
-        name: {
+        reason: {
           type: Sequelize.STRING,
+          unique: true,
+          allowNull: true,
         },
         status: {
           type: Sequelize.STRING,
@@ -46,17 +48,13 @@ module.exports = class SensorsRepository {
         },
       });
     }
-
-    await repository.sync();
   }
 
   async addSensorsEvent(event) {
-    await this.initialize();
     return await sensorEventModel.create(event);
   }
 
   async getEvents(category, sortBy) {
-    await this.initialize();
     return await sensorEventModel.findAll({
       order: [[sortBy, 'ASC']],
       where: {

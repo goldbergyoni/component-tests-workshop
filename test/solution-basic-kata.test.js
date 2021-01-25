@@ -1,6 +1,7 @@
 const request = require('supertest');
 const nock = require('nock');
 const { initializeAPI } = require('../src/entry-points/sensors-api');
+const { getShortUnique } = require('./test-helper');
 
 let expressApp;
 
@@ -24,9 +25,10 @@ describe('Order API #component', () => {
   describe('POST /event', () => {
     test('When temperature is not specified, should not save the event', async () => {
       // Arrange
+
       const eventToAdd = {
         temperature: undefined,
-        name: 'Thermostat-temperature', // This must be unique
+        reason: `Thermostat-temperature ${getShortUnique()}`, // This must be unique
         color: 'Green',
         weight: '80',
         status: 'active',
@@ -38,7 +40,7 @@ describe('Order API #component', () => {
 
       // Assert
       const potentiallyExistingEvent = await request(expressApp).get(
-        '/sensor-events/no-temperature-test/name',
+        '/sensor-events/no-temperature-test/reason',
       );
       expect(potentiallyExistingEvent.body).toMatchObject([]);
     });
@@ -50,7 +52,7 @@ describe('Order API #component', () => {
         temperature: 70,
         longtitude: 80,
         latitude: 120,
-        name: 'Thermostat',
+        reason: `Thermostat ${getShortUnique()}`,
         weight: '80',
         status: 'active',
       };
@@ -64,20 +66,20 @@ describe('Order API #component', () => {
       // expect(nockRecord.isDone()).toBe(true);
     });
 
-    test('When sorting by name, then results are sorted properly', async () => {
+    test('When sorting by event reason, then results are sorted properly', async () => {
       // Arrange
-      const uniqueCategory = `unique-category-for-sort - ${Math.random()}`;
+      const uniqueCategory = `unique-category-for-sort - ${getShortUnique()}`;
       const secondEvent = {
         category: uniqueCategory,
         temperature: 70,
-        name: 'def-this-should-come-second',
+        reason: `def-this-should-come-second ${getShortUnique()}`,
         weight: 80,
         status: 'active',
       };
       const firstEvent = {
         category: uniqueCategory,
         temperature: 70,
-        name: 'abc-this-should-come-first',
+        reason: `abc-this-should-come-first ${getShortUnique()}`,
         weight: 80,
         status: 'active',
       };
@@ -86,7 +88,7 @@ describe('Order API #component', () => {
 
       // Act
       const receivedResult = await request(expressApp).get(
-        `/sensor-events/${uniqueCategory}/name`,
+        `/sensor-events/${uniqueCategory}/reason`,
       );
 
       // Assert
