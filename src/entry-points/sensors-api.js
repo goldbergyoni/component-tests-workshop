@@ -40,6 +40,12 @@ const initializeAPI = () => {
     return res.json(DBResponse);
   });
 
+  router.get('/sensor-events/:id', async (req, res, next) => {
+    const sensorsRepository = new SensorsDal();
+    const sensorToReturn = await sensorsRepository.getSensorById(req.params.id);
+    res.json(sensorToReturn);
+  });
+
   // get existing events
   router.get('/sensor-events/:category/:sortBy', async (req, res, next) => {
     const sensorsRepository = new SensorsDal();

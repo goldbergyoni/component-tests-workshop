@@ -2,9 +2,12 @@
 // ✅ Whenever you see this icon, there's a TASK for you
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
+// ⚠️ Warning: This is the solution to the mission-data-isolation exercise - Try solving yourself before looking here
+
 const request = require('supertest');
 const nock = require('nock');
 const { initializeAPI } = require('../src/entry-points/sensors-api');
+const { getShortUnique } = require('./test-helper');
 
 let expressApp;
 
@@ -27,28 +30,28 @@ describe('Sensors test', () => {
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: 'Thermostat-failed', // This must be unique
+      reason: `Thermostat-failed-${getShortUnique()}`, // This must be unique
       color: 'Green',
-      weight: '80',
+      weight: 80,
       status: 'active',
     };
 
     // Act
-    // 💡 TIP: use any http client lib like Axios OR supertest
-    // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
-    // 💡 TIP: Check not only the HTTP status bot also the body
+    eventToAdd.id = expect.any(Number);
+    expect(receivedResponse).toMatchObject({
+      status: 200,
+      body: eventToAdd,
+    });
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
   // 💡 TIP: The failure is because the field 'reason' is unique. When the test runs for the second time -> This value already exists
   // 💡 TIP: Write an helper function that create unique and short value, put this at the end of the reason field
-
-  // ✅ TASK: In the test above 👆, ensure that 'id' field is also part of the response with the right type
-  // But hey, there is a challenge here: The 'id' is different in every response
-  // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
-  //  https://jestjs.io/docs/en/expect#expectanyconstructor
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
@@ -56,16 +59,42 @@ describe('Sensors test', () => {
     'When a record exist with a specific reason and trying to add a second one, then it fails with status 409',
   );
 
+  // ✅ TASK: In one of the tests above 👆, ensure that 'id' field is also part of the response with the right type
+  // But hey, there is a challenge here: The 'id' is different in every response
+  // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
+  //  https://jestjs.io/docs/en/expect#expectanyconstructor
+
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the test above 👆
-  // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
+  // 💡 TIP: This is not the recommended technique, to reuse records from previous tests, we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
-    // 💡 TIP: At first, query for the event that was added in the first test
-    // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+  test('When querying for event by id, Then the right event is being returned', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed-${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+    const anExistingEventId = (
+      await request(expressApp).post('/sensor-events').send(eventToAdd)
+    ).body.id;
+
+    // Act
+    const receivedResponse = await request(expressApp).get(
+      `/sensor-events/${anExistingEventId}`,
+    );
+
+    // Assert
+    expect(receivedResponse).toMatchObject({
+      status: 200,
+      body: eventToAdd,
+    });
   });
 
-  // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
+  // ✅ TASK: Run the last test 👆 alone. Does it pass now?
   // 💡 TIP: To run a single test only, put the word test.only in front of the test method
   // 💡 TIP: Other way to run a single test is to run the tests in watch mode - 'npm run test:dev',
   //  then within the CLI type "t", now type your desired test name
