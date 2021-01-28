@@ -10,12 +10,18 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  console.log('before');
   nock('http://localhost')
-    .get('/notification')
+    .post('/notification/default')
     .reply(200, {
       success: true,
     })
     .persist();
+});
+
+afterEach(() => {
+  console.log('after');
+  nock.cleanAll();
 });
 
 // ✅ TASK: Test that when a new event is posted to /sensor-events route, if category or temperature are not specified -> the event is NOT saved to the DB!
@@ -45,7 +51,7 @@ describe('Order API #component', () => {
       expect(potentiallyExistingEvent.body).toMatchObject([]);
     });
 
-    test('When a temperature is beyond 50, then expects a notification to be sent', async () => {
+    test('When a temperature is above 50, then expects a notification to be sent', async () => {
       // Arrange
       const highTemperatureEvent = {
         category: 'kids-room',

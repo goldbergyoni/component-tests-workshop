@@ -75,14 +75,16 @@ Navigate to the repository you've just cloned and install dependencies:
 npm i
 ```
 
-### ✅ 6 Ensure testing works
+### ✅❗️ 6 Ensure that testing works
 
-Run the following command and ensure that the output confirms that all the test succeeded
+Run the following command and ensure that the output confirms that all the test succeeded. 
 
 ```
 npm run test
 
 ```
+
+❗️If the last step failed - Open an issue with the entire error information at least 48 hours before the workshop
 
 ### ✅ 7 Polish Your JS Skills
 

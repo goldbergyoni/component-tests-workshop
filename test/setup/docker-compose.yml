@@ -7,7 +7,7 @@ services:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=myuserpassword
       - POSTGRES_DB=sensors
-    container_name: 'postgres-for-testing'
+    container_name: 'testing-db'
     ports:
       - '54325:5432'
     tmpfs: /var/lib/postgresql/data

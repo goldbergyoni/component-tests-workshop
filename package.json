@@ -19,6 +19,7 @@
   "dependencies": {
     "@types/sequelize": "^4.28.9",
     "axios": "^0.21.1",
+    "axios-retry": "^3.1.9",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "nock": "^13.0.5",

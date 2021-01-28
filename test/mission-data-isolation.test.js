@@ -1,5 +1,6 @@
 // 🏅 Your mission is to create your first integration tests here 💜
 // ✅ Whenever you see this icon, there's a TASK for you
+// ✅🚀 This symbol represents an advanced task
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
 const request = require('supertest');
@@ -77,66 +78,23 @@ describe('Sensors test', () => {
   // ✅ TASK: Let's fix the query test above 👆 - Make it pass all the time, even when running alone
   // 💡 TIP: Create the desired state within the test, don't trust any other test
 
-  // ✅🚀 TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
-  // Check that when adding two events at the same time, both are saved successfully
-  // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retriveable
-  // 💡 TIP: Promise.all function might be helpful to parallelize the requests
-
-  // ✅ TASK: Write the follwing test below 👇 to check that the app is able to return all records
+  // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
   test('When adding multiple events, then all of them appear in the result', () => {});
 
-  // ✅ TASK: Clean-up in global-teardown
-  // 💡 TIP: multiple options
-
-  // ✅ TASK: Global context
-  // 💡 TIP: Add store
-
-  // ✅ TASK: Multi-file
-  // 💡 TIP: Add store
-
-  // ✅ TASK: Run parallel
-  // 💡 TIP: Add store
-
-  // ✅ TASK: Big response
-  // 💡 TIP: Add store
-
-  // ✅ TASK: Parameterized test
-  // 💡 TIP: Add store
-
-  // ✅ TASK: Big data
-  // 💡 TIP: Add store
-
-  // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
-  // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
-
-  // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
-  // 💡 TIP: Consider both the HTTP status and the body
-
-  // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
-  // 💡 TIP: Whenever possible, use the public API for verification
-
-  // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right event when a single event exist
-  // 💡 TIP: Ensure that exactly one was returned and that this is the right event
-  // 💡 TIP: Try using as few assertions as possible, maybe even only one
-
-  // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right events when multiple events exist
-  // 💡 TIP: Ensure that all the relevant events were returned
-
-  // ✅ TASK: Test that querying for /sensor-events route and sorting by the field 'name', the results are indeed sorted
-  // 💡 TIP: Each test should be independent and might run alone without others, don't count on data (events) from other tests
-
-  // ✅ Learning TASK: Test that when a new valid event is posted to /sensor-events route, if the temperature exceeds 50 degree a notification is being sent
-  // 💡 TIP: This was not covered in the course. To achieve this read about the library 'nock' which can verify that the /localhost/notification service was called
-
-  // ✅ Ensure that the webserver is closed when all the tests are completed
-  // 💡 TIP: Use the right test hook to call the API and instruct it to close
-
-  // ✅ Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
+  // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
-  // ✅ Ensure that the app is read for production and can stat listening to requests not only during testing
-  // 💡 TIP: Sometimes we focus only on testing and it might happen that the app can't bootstrap and listen in a production scenario
+  // ✅🚀 TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
+  // Check that when adding two events at the same time, both are saved successfully
+  // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
+  // 💡 TIP: Promise.all function might be helpful to parallelize the requests
+
+  // ✅🚀 TASK: Although we don't clean-up the DB during the tests, it's useful to clean-up in the end. Let's delete the data tables after all the tests
+  // 💡 TIP: Choose the right hook thoughtfully and remember that two test files might get executed at the same time
+
+  // ✅🚀 TASK: Test that querying for /sensor-events route and sorting by the field 'name', the results are indeed sorted
+  // 💡 TIP: Each test should be independent and might run alone without others, don't count on data (events) from other tests
 });

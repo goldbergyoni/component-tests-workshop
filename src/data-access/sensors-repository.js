@@ -58,12 +58,16 @@ module.exports = class SensorsRepository {
     return await sensorEventModel.findOne({ where: { id: id } });
   }
 
-  async getEvents(category, sortBy) {
+  async getEventsByCategory(category, sortBy = 'category') {
     return await sensorEventModel.findAll({
       order: [[sortBy, 'ASC']],
       where: {
         category,
       },
     });
+  }
+
+  async getAllEvents() {
+    return await sensorEventModel.findAll({});
   }
 };
