@@ -21,7 +21,15 @@ beforeEach(() => {
 });
 
 describe('Sensors test', () => {
-  // ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
+  // ✅ #daniel TASK: Run the testing and ensure the the next simplistic test pass
+  test('Just checking that testing works on your machine', () => {
+    expect('Me enjoying in the integration test workshop').toBeTruthy();
+    // 💡 TIP: The the tests in watch mode: run test:dev
+    // 💡 TIP: When in watch mode, within the terminal/CMD type "p" -> Then start typing this file name, choose it
+    //  It should run only this file. Click "w" to return to the main menu
+  });
+
+  // #daniel ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
   // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
