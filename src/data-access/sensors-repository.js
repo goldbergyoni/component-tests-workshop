@@ -1,4 +1,5 @@
 const Sequelize = require('sequelize');
+const { AppError } = require('../error-handling');
 const sequelizeConfig = require('./config/config');
 
 let repository;
@@ -51,7 +52,15 @@ module.exports = class SensorsRepository {
   }
 
   async addSensorsEvent(event) {
-    return await sensorEventModel.create(event);
+    try {
+      return await sensorEventModel.create(event);
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw new AppError('duplicated-event', true, 409);
+      } else {
+        throw error;
+      }
+    }
   }
 
   async getSensorById(id) {

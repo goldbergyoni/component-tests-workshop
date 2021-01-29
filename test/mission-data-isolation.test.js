@@ -5,12 +5,21 @@
 
 const request = require('supertest');
 const nock = require('nock');
-const { initializeAPI } = require('../src/entry-points/sensors-api');
+const {
+  startWebServer,
+  stopWebServer,
+} = require('../src/entry-points/sensors-api');
+const { getShortUnique, getSensorEvent } = require('./test-helper');
 
 let expressApp;
 
-beforeAll(() => {
-  expressApp = initializeAPI();
+beforeAll(async (done) => {
+  expressApp = await startWebServer();
+  done();
+});
+
+afterAll(async () => {
+  await stopWebServer();
 });
 
 beforeEach(() => {
@@ -30,7 +39,7 @@ describe('Sensors test', () => {
       temperature: 20,
       reason: 'Thermostat-failed', // This must be unique
       color: 'Green',
-      weight: '80',
+      weight: 80,
       status: 'active',
     };
 
@@ -45,6 +54,7 @@ describe('Sensors test', () => {
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
   // 💡 TIP: The failure is because the field 'reason' is unique. When the test runs for the second time -> This value already exists
   // 💡 TIP: Write an helper function that create unique and short value, put this at the end of the reason field
+  // 💡 TIP: For the sake of this exercise, this helper can be as simple as just randomize number or use a timestamp
 
   // ✅ TASK: In the test above 👆, ensure that 'id' field is also part of the response with the right type
   // But hey, there is a challenge here: The 'id' is different in every response

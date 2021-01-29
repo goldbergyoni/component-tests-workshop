@@ -5,22 +5,25 @@
 
 const request = require('supertest');
 const nock = require('nock');
-const { initializeAPI } = require('../src/entry-points/sensors-api');
-const { getSensorEvent, getShortUnique } = require('./test-helper');
-
+const {
+  startWebServer,
+  stopWebServer,
+} = require('../src/entry-points/sensors-api');
+const { getShortUnique, getSensorEvent } = require('./test-helper');
 let expressApp;
 
-beforeAll((done) => {
-  expressApp = initializeAPI();
-
+beforeAll(async (done) => {
+  expressApp = await startWebServer();
   done();
+});
+
+afterAll(async () => {
+  await stopWebServer();
 });
 
 beforeEach(() => {});
 
 afterEach(() => {});
-
-afterAll(() => {});
 
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?

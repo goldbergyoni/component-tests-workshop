@@ -6,22 +6,30 @@
 
 const request = require('supertest');
 const nock = require('nock');
-const { initializeAPI } = require('../src/entry-points/sensors-api');
+const {
+  startWebServer,
+  stopWebServer,
+} = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 
 let expressApp;
 
-beforeAll(() => {
-  expressApp = initializeAPI();
+beforeAll(async (done) => {
+  expressApp = await startWebServer();
+  done();
 });
 
 beforeEach(() => {
-  nock('http://localhost').post(/notification.*/).reply(200, {
-    success: true,
-  });
+  nock('http://localhost')
+    .post(/notification.*/)
+    .reply(200, {
+      success: true,
+    });
 });
 
-
+afterAll(async () => {
+  await stopWebServer();
+});
 
 describe('Sensors test', () => {
   // ✅ TASK: Write the following test 👇 to ensure adding an event succeed
@@ -52,13 +60,24 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
   // 💡 TIP: The failure is because the field 'reason' is unique. When the test runs for the second time -> This value already exists
-  // 💡 TIP: Write an helper function that create unique and short value, put this at the end of the reason field
+  // 💡 TIP: Write a simple helper function that create unique and short value, put this at the end of the reason field
+  // 💡 TIP: For the sake of this exercise, this helper can be as simple as just randomize number or use a timestamp
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  test.todo(
-    'When a record exist with a specific reason and trying to add a second one, then it fails with status 409',
-  );
+  test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent({ reason: 'Failure' });
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Act
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    expect(receivedResponse.status).toBe(409);
+  });
 
   // ✅ TASK: In one of the tests above 👆, ensure that 'id' field is also part of the response with the right type
   // But hey, there is a challenge here: The 'id' is different in every response

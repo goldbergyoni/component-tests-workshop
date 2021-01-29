@@ -1,20 +1,28 @@
 // 🏅 Your mission is to create your first integration tests here 💜
 // ✅ Whenever you see this icon, there's a TASK for you
+// ✅🚀 This symbol represents an advanced task
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
 const request = require('supertest');
-
 const nock = require('nock');
-const { initializeAPI } = require('../src/entry-points/sensors-api');
+const {
+  startWebServer,
+  stopWebServer,
+} = require('../src/entry-points/sensors-api');
+const { getShortUnique, getSensorEvent } = require('./test-helper');
 
 let expressApp;
 
-beforeAll(() => {
-  expressApp = initializeAPI();
+beforeAll(async (done) => {
+  expressApp = await startWebServer();
+  done();
+});
+
+afterAll(async () => {
+  await stopWebServer();
 });
 
 beforeEach(() => {
-  // 📗 Reading exercise: Why is this needed 👇? Read about npm/nock
   nock('http://localhost').get('/notification').reply(200, {
     success: true,
   });
@@ -37,7 +45,7 @@ describe('Sensors test', () => {
       temperature: 20,
       name: 'Thermostat-temperature', // This must be unique
       color: 'Green',
-      weight: '80',
+      weight: 80,
       status: 'active',
       // 💡 TIP: Consider explicitly specify that category is undefined
     };

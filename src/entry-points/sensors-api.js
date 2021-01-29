@@ -1,97 +1,113 @@
 const express = require('express');
 const util = require('util');
-const axios = require('axios');
 const bodyParser = require('body-parser');
-const axiosRetry = require('axios-retry');
-const SensorsDal = require('../data-access/sensors-repository');
-const validationService = require('../domain/validation-service');
-axiosRetry(axios, { retries: 3 });
+const SensorsService = require('../domain/sensors-service');
+const { errorHandler, AppError } = require('../error-handling');
 
-const initializeAPI = () => {
-  const expressApp = express();
-  const router = express.Router();
-  expressApp.use(
-    bodyParser.urlencoded({
-      extended: true,
-    }),
-  );
-  expressApp.use(bodyParser.json());
-  expressApp.listen();
+let serverConnection;
 
-  // add new event
-  router.post('/sensor-events', async (req, res, next) => {
-    console.log(
-      `Sensors events was called to add new event ${util.inspect(req.body)}`,
+const startWebServer = async () => {
+  return new Promise((resolve, reject) => {
+    const expressApp = express();
+
+    expressApp.use(
+      bodyParser.urlencoded({
+        extended: true,
+      }),
     );
-    
-    const eventToHandle = req.body;
-    let { temperature, category, notificationCategory } = eventToHandle;
-    validationService(eventToHandle);
+    expressApp.use(bodyParser.json());
+    defineAllRoutes(expressApp);
+    registerErrorHandling(expressApp);
 
-    // validation
-    if (!temperature || !category) {
-      return res.status(400).end();
+    const webServerPort = process.env.PORT ? process.env.PORT : null;
+    serverConnection = expressApp.listen(webServerPort, () => {
+      resolve(expressApp);
+    });
+  });
+};
+
+const stopWebServer = async () => {
+  return new Promise((resolve, reject) => {
+    serverConnection.close(() => {
+      resolve();
+    });
+  });
+};
+
+function defineAllRoutes(expressApp) {
+  const router = express.Router();
+
+  // add new event - Schema example
+  //   category: `Home equipment`,
+  //   temperature: 20,
+  //   reason: `Thermostat-failed`, // This must be unique
+  //   color: 'Green',
+  //   weight: 80,
+  //   status: 'active',
+  //   notificationCategory: 'default',
+  router.post('/sensor-events', async (req, res, next) => {
+    try {
+      console.log(
+        `Sensors events was called to add new event ${util.inspect(req.body)}`,
+      );
+      const sensorsService = new SensorsService();
+      const response = await sensorsService.addEvent(req.body);
+
+      res.json(response);
+    } catch (error) {
+      next(error);
     }
-
-    if (temperature > 50 || (category === 'kids-room' && temperature > 30)) {
-      const id = Math.ceil(Math.random() * 1000);
-      if (!notificationCategory) {
-        notificationCategory = 'default';
-      }
-
-      try {
-        await axios.post(
-          `http://localhost/notification/${notificationCategory}`,
-          {
-            title: 'Something critical happened',
-            id,
-          },
-        );
-        eventToHandle.notificationSent = true;
-      } catch (error) {
-        eventToHandle.notificationSent = false;
-        console.log(
-          `Don't want to stop because of this notification error ${error}`,
-        );
-      }
-    }
-
-    // save to DB (Caution: simplistic code without layers and validation)
-    const sensorsRepository = new SensorsDal();
-    const DBResponse = await sensorsRepository.addSensorsEvent(eventToHandle);
-
-    return res.json(DBResponse);
   });
 
   router.get('/sensor-events/:id', async (req, res, next) => {
-    const sensorsRepository = new SensorsDal();
-    const sensorToReturn = await sensorsRepository.getSensorById(req.params.id);
+    const sensorsService = new SensorsService();
+    const sensorToReturn = await sensorsService.getSensorById(req.params.id);
     res.json(sensorToReturn);
   });
 
   // get existing events with filters
   router.get('/sensor-events/:category/:sortBy', async (req, res, next) => {
-    const sensorsRepository = new SensorsDal();
-    const sensorsToReturn = await sensorsRepository.getEventsByCategory(
+    const sensorsService = new SensorsService();
+    const sensorToReturn = await sensorsService.getEventsByCategory(
       req.params.category,
       req.params.sortBy,
     );
-    res.json(sensorsToReturn);
+
+    res.json(sensorToReturn);
   });
 
   // get alle vents
   router.get('/sensor-events/', async (req, res, next) => {
-    const sensorsRepository = new SensorsDal();
-    const sensorsToReturn = await sensorsRepository.getAllEvents();
-    console.log(JSON.stringify(sensorsToReturn[0]));
+    const sensorsService = new SensorsService();
+    const sensorsToReturn = await sensorsService.getAllEvents();
+
     res.json(sensorsToReturn);
   });
 
   expressApp.use('/', router);
+}
 
-  return expressApp;
-};
+function registerErrorHandling(expressApp) {
+  expressApp.use(async (error, req, res, next) => {
+    if (typeof error === 'object') {
+      if (error.isTrusted === undefined || error.isTrusted === null) {
+        error.isTrusted = true; //Error during a specific request is usually not catastrophic and should not lead to process exit
+      }
+    }
+    await errorHandler.handleError(error);
+    res.status(error.status || 500).end();
+  });
+
+  process.on('uncaughtException', (error) => {
+    errorHandler.handleError(error);
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    errorHandler.handleError(reason);
+  });
+}
 
 module.exports = {
-  initializeAPI,
+  startWebServer,
+  stopWebServer,
 };
