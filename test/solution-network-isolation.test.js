@@ -20,6 +20,7 @@ beforeAll(async (done) => {
 
 afterAll(async () => {
   await stopWebServer();
+  nock.enableNetConnect();
 });
 
 beforeEach(() => {
@@ -127,17 +128,17 @@ describe('Sensors test', () => {
 // 💡 TIP: When approaching real HTTP requests during testing, this might incur costs, performance issues and mostly flakiness
 // 💡 TIP: Nock allows you to prevent this using the command nock.enableNetConnect(). Just make sure to allow 127.0.0.1 calls since this is the internal API
 
-// ✅🚀 #daniel TASK: Write the same test like above 👆, but this time when the response arrives with some delay
+// ✅🚀 TASK: Write the same test like above 👆, but this time when the response arrives with some delay
 // 💡 TIP: Some code contains races between multiple tasks (e.g. Promise.race), for example when waiting for the request for sometime
 // and after sometime invoking alternative code. If the request will bounce too quick - The alternative path will never be tested
 // 💡 TIP: Nock is capable of simulating delays: nock(url).post(path).delay(timeInMillisecond)
 
-// ✅🚀 #daniel TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
+// ✅🚀 TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
 // the remote service does not reply at all, we are still able to progress and save the event
 // 💡 TIP: Nock is capable of simulating timeouts without waiting for the actual timeout
 // Here's nock syntax: nock(url).post(path).delay(timeInMillisecond). Choose delay value that is just a bit bigger than Axios default
 
-// ✅🚀 #daniel TASK: Write the following test below which
+// ✅🚀 TASK: Write the following test below which
 // 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
 test('When emitting event and the notification service fails once, then a notification is still being retried and sent ', () => {
   // 💡 TIP: Make nock return an error response once, then make it succeed in the 2 time

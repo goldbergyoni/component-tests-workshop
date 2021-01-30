@@ -137,10 +137,11 @@ describe('Sensors test', () => {
   test('When adding multiple events, then all of them appear in the result', async () => {
     // Arrange
     const eventToAdd1 = getSensorEvent({});
+    const eventToAdd2 = getSensorEvent({});
+    // This solution not yet uses Promise.all. It's better to use Promise.all
     const event1Id = (
       await request(expressApp).post('/sensor-events').send(eventToAdd1)
     ).body.id;
-    const eventToAdd2 = getSensorEvent({});
     const event2Id = (
       await request(expressApp).post('/sensor-events').send(eventToAdd2)
     ).body.id;

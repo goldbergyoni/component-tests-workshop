@@ -38,13 +38,14 @@ describe('Sensors test', () => {
     //   .post('/sensor-events')
     //   .send(eventToAdd);
 
-    // // Assert
+    // Assert
     // expect(receivedResponse.status).toBe(200);
   });
 
-  // ✅ TASK: Fix the failing test above 👆 by intercepting the network call and replying with some sensible default
+  // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
+  //  Intercepting the network call and replying with some sensible default. Nock is a good tool for this mission
   // 💡 TIP: Many tests will need to avoid doing network requests, put this interception within some a test hook that affect all the tests
-  // 💡 TIP: This is the basic nock syntax: nock('http://localhost').post(/notification./default).reply(200, {success: true,});
+  // 💡 TIP: This is the basic nock syntax: nock('http://localhost').post('/notification/default').reply(200, { success: true });
 
   // ✅ TASK: Ensure to clean-up all the defined nocks after each test. Let each test start with a clean slate!
   // 💡 TIP: Sometimes tests do modify some network/services reply, further tests might fail because of these changes
@@ -61,8 +62,13 @@ describe('Sensors test', () => {
 
     // 💡 TIP: You need to define here a new nock, so you can listen to it and ensure that the call did happen
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
-    // Note that the notification URL contains the notificationCategory, so you can generate unique notificationCategory
+    // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
     // and the URL will have an address that is unique to this test
+    /*
+    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+      ).reply(200, {success: true,});
+      */
 
     // Act
 
@@ -74,7 +80,7 @@ describe('Sensors test', () => {
   // ✅ TASK: In the test above that checks for notification, ensure that the request body was valid. Otherwise, our code
   //  might fail to issue the right request (e.g. factor invalid body) and the test will not discover this
   // 💡 TIP: nock allows getting the request body using its constructor: nock(url).post(url, (body)=>{your function save the body in a test variable})
-  // Use this function to set a local variable in the test with the body. Then on the assertion phase, check the content of this variable
+  // After doing this, the variable notificationPayload will hold the body. On the Assert phase, ensure that it contains the right schema or data
 
   // ✅ TASK: Write the following test below
   test('When emitting a new event and the notification service replies with 500 error, then the added event was still saved successfully', async () => {
@@ -97,17 +103,20 @@ describe('Sensors test', () => {
 // 💡 TIP: When approaching real HTTP requests during testing, this might incur costs, performance issues and mostly flakiness
 // 💡 TIP: Nock allows you to prevent this using the command nock.enableNetConnect(). Just make sure to allow 127.0.0.1 calls since this is the internal API
 
-// ✅🚀 #daniel TASK: Write the same test like above 👆, but this time when the response arrives with some delay
+// ✅🚀 When this tets suite (file) is done, ensure to clean-up and enable network requests - Maybe other test files do wish to approach external resources
+// 💡 TIP: Nock intercepts any calls within the same process. Anything that is not reset here will affect the next tests
+
+// ✅🚀  TASK: Write the same test like above 👆, but this time when the response arrives with some delay
 // 💡 TIP: Some code contains races between multiple tasks (e.g. Promise.race), for example when waiting for the request for sometime
 // and after sometime invoking alternative code. If the request will always bounce back too quick - The alternative path will never be tested
 // 💡 TIP: Nock is capable of simulating delays: nock(url).post(path).delay(timeInMillisecond)
 
-// ✅🚀 #daniel TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
+// ✅🚀 TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
 // the remote service does not reply at all, we are still able to progress and save the event
 // 💡 TIP: Nock is capable of simulating timeouts without waiting for the actual timeout
 // Here's nock syntax: nock(url).post(path).delay(timeInMillisecond). Choose delay value that is just a bit bigger than Axios default
 
-// ✅🚀 #daniel TASK: Write the following test below
+// ✅🚀 TASK: Write the following test below
 // 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
 test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', () => {
   // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time

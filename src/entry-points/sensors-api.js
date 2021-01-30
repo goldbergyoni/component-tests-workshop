@@ -37,7 +37,7 @@ const stopWebServer = async () => {
 function defineAllRoutes(expressApp) {
   const router = express.Router();
 
-  // add new event - Schema example
+  // 📖 add new event - Schema example
   //   category: `Home equipment`,
   //   temperature: 20,
   //   reason: `Thermostat-failed`, // This must be unique
@@ -48,12 +48,18 @@ function defineAllRoutes(expressApp) {
   router.post('/sensor-events', async (req, res, next) => {
     try {
       console.log(
-        `Sensors events was called to add new event ${util.inspect(req.body)}`,
+        `The sensors events was called to add new event ${util.inspect(
+          req.body,
+        )}`,
       );
       const sensorsService = new SensorsService();
       const response = await sensorsService.addEvent(req.body);
+      let returnedHTTPStatus = 200;
+      if (response.notificationSent === false) {
+        returnedHTTPStatus = 202;
+      }
 
-      res.json(response);
+      res.status(returnedHTTPStatus).json(response);
     } catch (error) {
       next(error);
     }

@@ -68,11 +68,12 @@ describe('Sensors test', () => {
   );
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
-  // was added using the test above 👆
+  // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
   test('When querying for event by id, Then the right event is being returned', () => {
-    // 💡 TIP: At first, query for the event that was added in the first test
+    // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
+    //  the ID of the added event globally). In this test, query for that ID
     // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
   });
 
@@ -82,11 +83,11 @@ describe('Sensors test', () => {
   //  then within the CLI type "t", now type your desired test name
 
   // ✅ TASK: The last step should have failed, the query test 👆 fails when running alone... Why?
-  // 💡 TIP: This is because the 'Add sensor event' test did not run, so there is no record to fetch
+  // 💡 TIP: This is because the first test ('Add sensor event') did not run, so no record added to the DB
   // 💡 TIP: A test that relies on records from other tests will always be fragile and increase the maintenance complexity
 
   // ✅ TASK: Let's fix the query test above 👆 - Make it pass all the time, even when running alone
-  // 💡 TIP: Create the desired state within the test, don't trust any other test
+  // 💡 TIP: In the arrange phase, add an event to query for. Don't trust any other test!
 
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
@@ -97,7 +98,7 @@ describe('Sensors test', () => {
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
-  // ✅🚀 #daniel TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
+  // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
   // Check that when adding two events at the same time, both are saved successfully
   // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
   // 💡 TIP: Promise.all function might be helpful to parallelize the requests
@@ -106,6 +107,6 @@ describe('Sensors test', () => {
   // 💡 TIP: Choose the right hook thoughtfully and remember that two test files might get executed at the same time
   // 💡 TIP: Within global-setup file, there is a docker-compose library that exemplifies running command within our docker-compose environment
 
-  // ✅🚀 #daniel TASK: Test that querying for /sensor-events route (i.e. get all) and sorting by the field 'category', the results are indeed sorted
+  // ✅🚀  TASK: Test that querying for /sensor-events route (i.e. get all) and sorting by the field 'temperature', the results are indeed sorted
   // 💡 TIP: Each test should be independent and might run alone without others, don't count on data (events) from other tests
 });

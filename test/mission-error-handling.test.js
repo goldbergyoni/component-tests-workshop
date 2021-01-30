@@ -105,7 +105,7 @@ describe('Sensors test', () => {
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
   });
 
-  // ✅ TASK: Code the following test below
+  // ✅🚀 TASK: Code the following test below
   // 💡 TIP: In Node.js, it's common to distinguish between Trusted vs Non-trusted errors. The former are casual errors that
   // happen during requests. The later, are fatal error that might hint that the process is in a bad state -> In this case the error
   // handler usually make the process exit
@@ -131,7 +131,7 @@ describe('Sensors test', () => {
     // 💡 TIP: Check here whether process.exit was called
   });
 
-  // ✅ TASK: Check that for any type of error that is being thrown, whether a valid error object or number or anything else - Our
+  // ✅🚀 TASK: Check that for any type of error that is being thrown, whether a valid error object or number or anything else - Our
   //  error handler is capable of handling it
   // 💡 TIP: 3rd party npm libraries sometimes throw all sort of error types like strings, Error or even plain objects
   // 💡 TIP: Use parameterized tests to avoid repeating yourself -> This allows defining multiple scenarios/errors and then
@@ -169,3 +169,7 @@ describe('Sensors test', () => {
     );
   });
 });
+
+// ✅🚀 TASK: Test that when the any startup method fails (one that happens before Express is ready), the process do exit
+// 💡 TIP: If our process is not being able to startup, there is no point in staying alive. This is called a 'zombie' process.
+// 💡 TIP: Since the webserver starts before the tests, you test would need to stub some method and then initialize a new webserver

@@ -47,6 +47,9 @@ module.exports = class SensorsRepository {
         temperature: {
           type: Sequelize.INTEGER,
         },
+        notificationSent: {
+          type: Sequelize.BOOLEAN,
+        },
       });
     }
   }

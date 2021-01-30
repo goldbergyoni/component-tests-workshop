@@ -12,6 +12,9 @@ module.exports = {
       color: {
         type: Sequelize.STRING,
       },
+      notificationSent: {
+        type: Sequelize.BOOLEAN,
+      },
       reason: {
         type: Sequelize.STRING,
         unique: true,
@@ -42,5 +45,5 @@ module.exports = {
       },
     }),
 
-  down: (queryInterface, Sequelize) => queryInterface.dropTable('Sensors'),
+  down: (queryInterface, Sequelize) => queryInterface.dropTable('SensorEvents'),
 };
