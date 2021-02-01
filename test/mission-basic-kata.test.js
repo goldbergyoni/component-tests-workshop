@@ -29,7 +29,7 @@ beforeEach(() => {
 });
 
 describe('Sensors test', () => {
-  // ✅ #daniel TASK: Run the testing and ensure the the next simplistic test pass
+  // ✅ TASK: Run the testing and ensure the the next simplistic test pass
   test('Just checking that testing works on your machine', () => {
     expect('Me enjoying in the integration test workshop').toBeTruthy();
     // 💡 TIP: The the tests in watch mode: run test:dev
@@ -37,7 +37,7 @@ describe('Sensors test', () => {
     //  It should run only this file. Click "w" to return to the main menu
   });
 
-  // #daniel ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
+  //  ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
   // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
@@ -58,14 +58,16 @@ describe('Sensors test', () => {
     // 💡 TIP: verify that status is 400
   });
 
-  // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
-  // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
-
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
   // 💡 TIP: Consider both the HTTP status and the body
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
-  // 💡 TIP: Whenever possible, use the public API for verification
+  // 💡 TIP: In the assert phase, query to get the event that was added
+  // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
+
+  // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
+  // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
+  // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
 
   // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right event when a single event exist
   // 💡 TIP: Ensure that exactly one was returned and that this is the right event
@@ -87,6 +89,5 @@ describe('Sensors test', () => {
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
-  // ✅ Ensure that the app is read for production and can stat listening to requests not only during testing
-  // 💡 TIP: Sometimes we focus only on testing and it might happen that the app can't bootstrap and listen in a production scenario
+  // Advanced: nock, error, check sorting
 });

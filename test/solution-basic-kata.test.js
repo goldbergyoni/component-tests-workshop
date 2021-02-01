@@ -18,7 +18,6 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
-  console.log('before');
   nock('http://localhost')
     .post('/notification/default')
     .reply(200, {
@@ -28,8 +27,29 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  console.log('after');
   nock.cleanAll();
+});
+
+test('When category is not specified, should get http 400 error', async () => {
+  // Arrange
+  const eventToAdd = {
+    temperature: 20,
+    name: 'Thermostat-temperature', // This must be unique
+    color: 'Green',
+    weight: 80,
+    status: 'active',
+    // 💡 TIP: Consider explicitly specify that category is undefined
+  };
+
+  // Act
+  // 💡 TIP: use any http client lib like Axios OR supertest
+  const receivedResult = await request(expressApp)
+    .post('/sensor-events')
+    .send(eventToAdd);
+
+  // Assert
+  // 💡 TIP: verify that status is 400
+  expect(receivedResult.status).toBe(400);
 });
 
 // ✅ TASK: Test that when a new event is posted to /sensor-events route, if category or temperature are not specified -> the event is NOT saved to the DB!
@@ -67,9 +87,13 @@ describe('Order API #component', () => {
         longtitude: 80,
         latitude: 120,
         reason: `Thermostat ${getShortUnique()}`,
+        notificationCategory: `kids-room-${getShortUnique()}`,
         weight: '80',
         status: 'active',
       };
+      const listenerToNotification = nock('http://localhost')
+        .post(`/notification/${highTemperatureEvent.notificationCategory}`)
+        .reply(200, { success: true });
 
       // Act
       await request(expressApp)
@@ -77,7 +101,7 @@ describe('Order API #component', () => {
         .send(highTemperatureEvent);
 
       // Assert
-      // expect(nockRecord.isDone()).toBe(true);
+      expect(listenerToNotification.isDone()).toBe(true);
     });
 
     test('When sorting by event reason, then results are sorted properly', async () => {
