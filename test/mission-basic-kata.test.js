@@ -102,6 +102,9 @@ describe('Sensors test', () => {
   // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
   // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
 
+  // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
+  // 💡 TIP: If it gets too long, extract obvious parts into an external helper
+
   // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right event when a single event exist
   // 💡 TIP: Ensure that exactly one was returned and that this is the right event
   // 💡 TIP: Try using as few assertions as possible, maybe even only one. expect(apiResponse).toMatchObject({//expected object here})
@@ -136,6 +139,11 @@ describe('Sensors test', () => {
   // Check that when adding two events at the same time, both are saved successfully
   // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
   // 💡 TIP: Promise.all function might be helpful to parallelize the requests
+
+  // ✅🚀 When adding a valid event, we get back some fields with dynamic values: createdAt, updatedAt, id
+  //  Check that these fields are not null and have the right schema
+  // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
+  //  https://jestjs.io/docs/en/expect#expectanyconstructor
 
   // ✅🚀 Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
