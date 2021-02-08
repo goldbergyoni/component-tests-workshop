@@ -1,5 +1,8 @@
 const request = require('supertest');
 const nock = require('nock');
+const sinon = require('sinon');
+const SensorsRepository = require('../src/data-access/sensors-repository');
+
 const {
   startWebServer,
   stopWebServer,
@@ -27,6 +30,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  sinon.restore();
   nock.cleanAll();
 });
 
@@ -66,7 +70,7 @@ describe('Order API #component', () => {
         color: 'Green',
         weight: '80',
         status: 'active',
-        category: 'no-temperature-test',
+        category: `category-${getShortUnique()}}`,
       };
 
       // Act
@@ -74,7 +78,7 @@ describe('Order API #component', () => {
 
       // Assert
       const potentiallyExistingEvent = await request(expressApp).get(
-        '/sensor-events/no-temperature-test/reason',
+        `/sensor-events/${eventToAdd.category}/reason`,
       );
       expect(potentiallyExistingEvent.body).toMatchObject([]);
     });
@@ -104,6 +108,28 @@ describe('Order API #component', () => {
       expect(listenerToNotification.isDone()).toBe(true);
     });
 
+    test('when getting all sensor events with the GET:/sensor-events route, it should retrieve events from DB including new added', async () => {
+      // Arrange
+      const uniqueCategory = `unique-category-${getShortUnique()}`;
+      const eventToAdd = getSensorEvent({ category: uniqueCategory });
+      const eventToAdd2 = getSensorEvent({ category: uniqueCategory });
+      await request(expressApp).post('/sensor-events').send(eventToAdd);
+      await request(expressApp).post('/sensor-events').send(eventToAdd2);
+
+      // Act
+      const receivedResponse = await request(expressApp)
+        .get(`/sensor-events/${uniqueCategory}/reason`)
+        .send();
+
+      // Assert
+      expect(receivedResponse.body).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining(eventToAdd),
+          expect.objectContaining(eventToAdd2),
+        ]),
+      );
+    });
+
     test('When sorting by event reason, then results are sorted properly', async () => {
       // Arrange
       const uniqueCategory = `unique-category-for-sort - ${getShortUnique()}`;
@@ -131,6 +157,49 @@ describe('Order API #component', () => {
 
       // Assert
       expect(receivedResult.body).toMatchObject([firstEvent, secondEvent]);
+    });
+
+    // ✅ TASK: Code the following test below
+    test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
+      // Arrange
+      const eventToAdd = getSensorEvent();
+      sinon
+        .stub(SensorsRepository.prototype, 'addSensorsEvent')
+        .rejects(new Error('foo'));
+
+      // Act
+      const receivedResult = await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
+
+      // Assert
+      expect(receivedResult.status).toBe(500);
+    });
+
+    // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
+    // Check that when adding two events at the same time, both are saved successfully
+    // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
+    // 💡 TIP: Promise.all function might be helpful to parallelize the requests
+    test('when two new events are added at the same time, it should add both without problems', async () => {
+      // Arrange
+      const eventToAdd1 = getSensorEvent();
+      const eventToAdd2 = getSensorEvent();
+
+      // Act
+      const addEvent1ResponseAsPromise = request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd1);
+      const addEvent2ResponseAsPromise = request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd2);
+      const [addEvent1Response, addEvent2Response] = await Promise.all([
+        addEvent1ResponseAsPromise,
+        addEvent2ResponseAsPromise,
+      ]);
+
+      // Assert
+      expect(addEvent1Response.status).toBe(200);
+      expect(addEvent2Response.status).toBe(200);
     });
   });
 });

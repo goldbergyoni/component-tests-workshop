@@ -50,6 +50,9 @@ module.exports = class SensorsRepository {
         notificationSent: {
           type: Sequelize.BOOLEAN,
         },
+        notificationCategory: {
+          type: Sequelize.STRING,
+        },
       });
     }
   }

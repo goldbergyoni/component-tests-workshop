@@ -37,7 +37,7 @@ describe('Sensors test', () => {
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: 'Thermostat-failed', // This must be unique
+      reason: `Thermostat-failed`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
@@ -63,9 +63,7 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  test.todo(
-    'When a record exist with a specific reason and trying to add a second one, then it fails with status 409',
-  );
+  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.

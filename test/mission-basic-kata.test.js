@@ -10,6 +10,7 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
+const sinon = require('sinon');
 
 let expressApp;
 
@@ -28,11 +29,15 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  sinon.restore();
+});
+
 describe('Sensors test', () => {
   // ✅ TASK: Run the testing and ensure the the next simplistic test pass
   test('Just checking that testing works on your machine', () => {
     expect('Me enjoying in the integration test workshop').toBeTruthy();
-    // 💡 TIP: The the tests in watch mode: run test:dev
+    // 💡 TIP: The the tests in watch mode: npm run test:dev
     // 💡 TIP: When in watch mode, within the terminal/CMD type "p" -> Then start typing this file name, choose it
     //  It should run only this file. Click "w" to return to the main menu
   });
@@ -47,10 +52,12 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
+      category: 'Something',
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
 
     // Act
+
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
@@ -60,6 +67,32 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
   // 💡 TIP: Consider checking both the HTTP status and the body
+  test('When inserting a valid event, should get successful response', async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      //name: 'Thermostat-temperature', // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Something',
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    };
+
+    // Act
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+    // 💡 TIP: use any http client lib like Axios OR supertest
+    // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    // Assert
+    // 💡 TIP: verify that status is 400
+    expect(receivedResult).toMatchObject({
+      status: 200,
+      body: eventToAdd,
+    });
+  });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
   // 💡 TIP: In the assert phase, query to get the event that was added
@@ -75,6 +108,18 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right events when multiple events exist
   // 💡 TIP: Ensure that all the relevant events were returned
+
+  // ✅ TASK: Code the following test below
+  test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
+    // Arrange
+    // 💡 TIP: Factor a valid event here, otherwise the request will get rejected on start and the failure won't happen
+    // 💡 TIP: Make some internal function fail, choose any class method
+    // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
+    //  https://sinonjs.org/releases/latest/stubs/
+    // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
+    // Act
+    // Assert
+  });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
   // 💡 TIP: Use the right test hook to call the API and instruct it to close

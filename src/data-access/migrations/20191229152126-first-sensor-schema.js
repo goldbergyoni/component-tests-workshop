@@ -43,6 +43,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
+      notificationCategory: {
+        type: Sequelize.STRING,
+      },
     }),
 
   down: (queryInterface, Sequelize) => queryInterface.dropTable('SensorEvents'),

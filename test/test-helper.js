@@ -4,7 +4,7 @@
 function getShortUnique() {
   const now = new Date();
   // We add this weak random just to cover the case where two test started at the very same millisecond
-  const aBitOfMoreSalt = Math.ceil(Math.random() * 99);
+  const aBitOfMoreSalt = Math.ceil(Math.random() * 999);
   return `${process.pid}${aBitOfMoreSalt}${now.getMilliseconds()}`;
 }
 

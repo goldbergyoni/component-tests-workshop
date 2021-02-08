@@ -1,9 +1,9 @@
 // This is meant to hide some code is issuing surprising network calls which we should discover
 const axios = require('axios');
 
-function someFunctionThatNobodyPaysAttentionTo() {
+async   function someFunctionThatNobodyPaysAttentionTo() {
   try {
-    axios.get('https://google.com');
+    await axios.get('https://google.com');
   } catch (e) {}
 }
 

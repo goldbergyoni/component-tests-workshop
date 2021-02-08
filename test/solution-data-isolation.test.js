@@ -51,10 +51,11 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
-    eventToAdd.id = expect.any(Number);
+    const expectedResult = eventToAdd;
+    expectedResult.id = expect.any(Number);
     expect(receivedResponse).toMatchObject({
       status: 200,
-      body: eventToAdd,
+      body: expectedResult,
     });
   });
 
@@ -170,6 +171,6 @@ describe('Sensors test', () => {
   // ✅🚀 TASK: Although we don't clean-up the DB during the tests, it's useful to clean-up in the end. Let's delete the data tables after all the tests
   // 💡 TIP: Choose the right hook thoughtfully and remember that two test files might get executed at the same time
 
-  // ✅🚀 TASK: Test that querying for /sensor-events route and sorting by the field 'name', the results are indeed sorted
+  // ✅🚀 TASK: Test that querying for /sensor-events route and sorting by the field 'reason', the results are indeed sorted
   // 💡 TIP: Each test should be independent and might run alone without others, don't count on data (events) from other tests
 });
