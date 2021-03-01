@@ -23,23 +23,26 @@ afterAll(async () => {
 
 beforeEach(() => {});
 
-afterEach(() => {});
+afterEach(() => {
+  nock.clearAll();
+});
 
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?
   // 💡 TIP: When setting high temperature event, then a notification is sent with HTTP request
-  test('When adding a valid event, Then should get successful confirmation', async () => {
+  test.only('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = getSensorEvent({ temperature: 60 });
+    nock('http://localhost').post('/notification/default').reply(200, { success: true });
 
-    // 💡 TIP: Uncomment me to make this test fail and realize why
-    // // Act
-    // const receivedResponse = await request(expressApp)
-    //   .post('/sensor-events')
-    //   .send(eventToAdd);
+    //💡 TIP: Uncomment me to make this test fail and realize why
+    // Act
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
-    // Assert
-    // expect(receivedResponse.status).toBe(200);
+    //Assert
+    expect(receivedResponse.status).toBe(200);
   });
 
   // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
@@ -64,17 +67,17 @@ describe('Sensors test', () => {
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
     // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
     // and the URL will have an address that is unique to this test
-    /*
     nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
         (payload) => (notificationPayload = payload),
       ).reply(200, {success: true,});
-      */
 
     // Act
+    await request(expressApp).post(expressApp).setEncoding(eventToAdd);
 
     // Assert
     // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
     // You may call whether this URL was called using - scope.isDone()
+    expect(scope.isDone()).toBeTrue();
   });
 
   // ✅ TASK: In the test above that checks for notification, ensure that the request body was valid. Otherwise, our code

@@ -37,7 +37,7 @@ describe('Sensors test', () => {
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `reason-${getShortUnique()}`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
@@ -46,15 +46,45 @@ describe('Sensors test', () => {
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(receivedResult).toMatchObject({
+      status: 200,
+      body: eventToAdd,
+    });
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
   // 💡 TIP: The failure is because the field 'reason' is unique. When the test runs for the second time -> This value already exists
   // 💡 TIP: Write an helper function that create unique and short value, put this at the end of the reason field
   // 💡 TIP: For the sake of this exercise, this helper can be as simple as just randomize number or use a timestamp
+  test('Run the test above twice', async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      reason: `reason-${getShortUnique()}`, // This must be unique
+      weight: 80,
+      status: 'active',
+      category: `category-${getShortUnique()}`,
+    };
+
+     // Act
+     await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+     // Assert
+     const retrievableEventResponse = await request(expressApp).get(
+      `/sensor-events/${eventToAdd.category}/reason`,
+    );
+    expect(retrievableEventResponse).toMatchObject({
+      status: 200,
+      body: [eventToAdd],
+    });
+  });
 
   // ✅ TASK: In the test above 👆, ensure that 'id' field is also part of the response with the right type
   // But hey, there is a challenge here: The 'id' is different in every response
@@ -64,6 +94,26 @@ describe('Sensors test', () => {
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
   // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
+  test('Run the test above twice', async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      reason: `reason-${getShortUnique()}`, // This must be unique
+      weight: 80,
+      status: 'active',
+      category: `category-${getShortUnique()}`,
+    };
+
+     // Act
+     await request(expressApp).post('/sensor-events').send(eventToAdd);
+     const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+     // Assert
+     expect(receivedResult.status).toBe(409);
+  });
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
