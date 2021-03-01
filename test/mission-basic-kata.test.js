@@ -48,21 +48,24 @@ describe('Sensors test', () => {
     // Arrange
     const eventToAdd = {
       temperature: 20,
-      name: 'Thermostat-temperature', // This must be unique
+      name: 'Thermostat-temperature', // This must be uniquew
       color: 'Green',
       weight: 80,
       status: 'active',
       category: 'Something',
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+      category: void 0,
     };
 
     // Act
 
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
     // 💡 TIP: verify that status is 400
+    expect(response.status).toBe(400);
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
@@ -92,15 +95,92 @@ describe('Sensors test', () => {
       status: 200,
       body: eventToAdd,
     });
+  test(`when a new valid event is posted to /sensor-events route, we get back a valid response`, async() => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      name: 'Thermostat-temperature', // This must be uniquew
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'category1',
+    };
+
+    // Act
+    const response = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body).toBeDefined();
+    // TODO: mockup time.
+    // TOOD: what about ID returned by database?
+    // expect(response.body).toMatchObject({"category": "category1", "color": "Green", "createdAt": "2021-02-08T16:18:48.776Z", "id": 61, "latitude": null, "longtitude": null, "notificationSent": null, "reason": null, "status": "active", "temperature": 20, "updatedAt": "2021-02-08T16:18:48.776Z", "weight": 80});
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
 
+  test(`when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB`, async() => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      name: 'Thermostat-temperature', // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'category2',
+    };
+
+    const eventCreated = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Act
+    const response = await request(expressApp).get(`/sensor-events/${eventCreated.body.id}`);
+
+    // Assert
+    expect(eventCreated.body.id).toBeDefined();
+    expect(response.status).toBe(200);
+  });
+
+
   // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
   // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
   // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
+  test(`when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!`, async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: void 0,
+      name: 'Thermostat-temperature', // This must be uniquew
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'category2',
+    };
+
+    // Act
+    const response = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(response.status).toBe(400);
+    expect(Object.entries(response.body).length).toBe(0);
+  });
+
+
+  test.only(`when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!`, async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: void 0,
+      name: 'Thermostat-temperature', // This must be uniquew
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'category2',
+    };
+
+    // Act & Assert
+    expect( async() => await request(expressApp).post('/sensor-events').send(eventToAdd)).rejects.toThrowError();
+  });
+
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
@@ -108,9 +188,25 @@ describe('Sensors test', () => {
   // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right event when a single event exist
   // 💡 TIP: Ensure that exactly one was returned and that this is the right event
   // 💡 TIP: Try using as few assertions as possible, maybe even only one. expect(apiResponse).toMatchObject({//expected object here})
+  test.only(`Test that querying the GET:/sensor-events route, it returns the right event when a single event exist`, async() => {
+    // Arrange
+
+    // Act
+
+    // Assert
+  });
+
 
   // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right events when multiple events exist
   // 💡 TIP: Ensure that all the relevant events were returned
+  test(``, () => {
+    // Arrange
+
+    // Act
+
+    // Assert
+  });
+
 
   // ✅ TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
@@ -126,19 +222,51 @@ describe('Sensors test', () => {
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
   // 💡 TIP: Use the right test hook to call the API and instruct it to close
+  test(``, () => {
+    // Arrange
+
+    // Act
+
+    // Assert
+  });
+
 
   // ✅🚀 Learning TASK: Test that when a new valid event is posted to /sensor-events route, if the temperature exceeds 50 degree a notification is being sent
   // 💡 TIP: This was not covered in the course yet. To achieve this read about the library 'nock' which can verify that the http://localhost/notification/{notificationCategory} service was called
   // 💡 TIP: Add the field notificationCategory to the event and set some value. This will be added to the notification call URL
   // 💡 TIP: The call to the notification service happens in the file 'sensors-service.js'
+  test(``, () => {
+    // Arrange
+
+    // Act
+
+    // Assert
+  });
+
 
   // ✅🚀  TASK: Test that querying for /sensor-events route (i.e. get all) and sorting by the field 'temperature', the results are indeed sorted
   // 💡 TIP: Each test should be independent and might run alone without others, don't count on data (events) from other tests
+  test(``, () => {
+    // Arrange
+
+    // Act
+
+    // Assert
+  });
+
 
   // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
   // Check that when adding two events at the same time, both are saved successfully
   // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
   // 💡 TIP: Promise.all function might be helpful to parallelize the requests
+  test(``, () => {
+    // Arrange
+
+    // Act
+
+    // Assert
+  });
+
 
   // ✅🚀 When adding a valid event, we get back some fields with dynamic values: createdAt, updatedAt, id
   //  Check that these fields are not null and have the right schema
@@ -148,4 +276,12 @@ describe('Sensors test', () => {
   // ✅🚀 Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
+  test(``, () => {
+    // Arrange
+
+    // Act
+
+    // Assert
+  });
+
 });
