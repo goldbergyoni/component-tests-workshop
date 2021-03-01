@@ -95,6 +95,7 @@ describe('Sensors test', () => {
       status: 200,
       body: eventToAdd,
     });
+  });    
   test(`when a new valid event is posted to /sensor-events route, we get back a valid response`, async() => {
     // Arrange
     const eventToAdd = {
