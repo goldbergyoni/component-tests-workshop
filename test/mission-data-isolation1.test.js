@@ -18,7 +18,7 @@ beforeAll(async (done) => {
   done();
 });
 
-afterAll(async () => {
+afterAll(async () =>  {
   await stopWebServer();
 });
 
@@ -177,10 +177,6 @@ describe('Sensors test', () => {
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
-
-  // ✅🚀  TASK: Test the following
-  test('When querying for a non-existing event, then get http status 404', () => {});
-  // 💡 TIP: How could you be sure that an item does not exist? 🤔
 
   // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
   // Check that when adding two events at the same time, both are saved successfully
