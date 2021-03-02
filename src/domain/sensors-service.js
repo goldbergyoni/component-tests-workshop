@@ -6,6 +6,7 @@ const { AppError } = require('../error-handling');
 
 class SensorsEventService {
   async addEvent(eventToHandle) {
+    axiosRetry(axios, { retries: 3 });
     let { temperature, category, notificationCategory } = eventToHandle;
     sanitizeService(eventToHandle);
 
