@@ -24,9 +24,9 @@ afterAll(async () => {
 
 beforeEach(() => {
   // 📗 Reading exercise: Why is this needed 👇? Read about npm/nock
-  nock('http://localhost').get('/notification').reply(200, {
-    success: true,
-  });
+  // nock('http://localhost').get('/notification').reply(200, {
+  //   success: true,
+  // });
 });
 
 describe('Sensors test', () => {
@@ -37,7 +37,7 @@ describe('Sensors test', () => {
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `Thermostat-failed-${getShortUnique()}`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
@@ -46,9 +46,19 @@ describe('Sensors test', () => {
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
-
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+  
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(receivedResponse).toMatchObject({
+      status: 200,
+      body: {
+        id: expect.any(Number),
+        ...eventToAdd
+      }
+    })
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
@@ -63,15 +73,52 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
+  test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed-${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const receivedResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    //Assert
+    expect(receivedResponse.status).toBe(409);
+
+
+  });
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
+  test('When querying for event by id, Then the right event is being returned', async() => {
     // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
     //  the ID of the added event globally). In this test, query for that ID
+    // Arrange
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed-${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+    
+    // Act
+    const responseAddedEvent = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const receivedResponse = await request(expressApp).get(`/sensor-events/${responseAddedEvent.body.id}`);
+    // Assert
+
+    expect(receivedResponse).toMatchObject({
+      status: 200,
+      body: eventToAdd
+    });
     // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
   });
 
