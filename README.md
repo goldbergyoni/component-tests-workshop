@@ -1,4 +1,4 @@
-![Header](./graphics/main-header.png "Component Tests")
+![Header](./graphics/workshop-banner.jpg "Component Tests")
 
 <br/>
 
@@ -9,7 +9,7 @@
 
 # Intro
 
-This workshop shows the immense power of narrow integration tests, also known as 'component test. This might make a dramatic impact on your testing effort and success 🚀. Warning: You might fall in love with testing 💚
+This workshop is a very deep dive into writing real-world and modern backend testing. Most traditional testing guides focus on testing functions and units. In their daily routine though, developers are challenged with covering all the layers of their components - Database, APIs, MQ, metrics, 3rd parties, and more - not just logic functions. This workshop is all about writing these realistic tests in the RIGHT way. Overall, it packs 25+ best practices and 20 hands-on exercises that will open your mind to modern testing techniques. 🚀. Warning: You might fall in love with testing 💚
 
 ![Header](/graphics/component-diagram.jpg "Component Tests")
 
