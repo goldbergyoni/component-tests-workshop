@@ -91,7 +91,11 @@ describe('Sensors test', () => {
     await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
-    expect(spyOnLogger.called).toBe(true);
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject({
+      name: 'db-is-unaccessible',
+      stack: expect.any(String),
+      message: expect.any(String),
+    });
   });
 
   // ✅ TASK: Code the following test below
@@ -126,6 +130,32 @@ describe('Sensors test', () => {
 
     // Assert
     expect(listenToProcessExit.called).toBe(true);
+  });
+
+  // ✅🚀 TASK: Check that when uncaught error is thrown, the logger writes the mandatory fields and the process exits
+  // 💡 TIP: The event process.on('uncaughtException' , yourCallBack) fires when an error is not caught and will lead to
+  // non-documented crash!
+  test('When uncaught exception is thrown, then logger writes the mandatory fields and the process exits', async () => {
+    // Arrange
+    if (process.exit.restore) {
+      process.exit.restore();
+    }
+    const listenToProcessExit = sinon.stub(process, 'exit');
+    const spyOnLogger = sinon.spy(console, 'error');
+
+    // Act
+    process.emit(
+      'unhandledRejection',
+      new AppError('something-bad', false, 500, 'something really bad'),
+    );
+
+    // Assert
+    expect(listenToProcessExit.called).toBe(true);
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject({
+      name: 'something-bad',
+      stack: expect.any(String),
+      message: expect.any(String),
+    });
   });
 
   describe('Various Error Types', () => {

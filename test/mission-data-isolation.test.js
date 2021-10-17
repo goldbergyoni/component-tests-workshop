@@ -105,6 +105,11 @@ describe('Sensors test', () => {
   // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
   // 💡 TIP: Promise.all function might be helpful to parallelize the requests
 
+  // ✅🚀 When adding a valid event, we get back some fields with dynamic values: createdAt, updatedAt, id
+  //  Check that these fields are not null and have the right schema
+  // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
+  //  https://jestjs.io/docs/en/expect#expectanyconstructor
+
   // ✅🚀 TASK: Although we don't clean-up the DB during the tests, it's useful to clean-up in the end. Let's delete the data tables after all the tests
   // 💡 TIP: Choose the right hook thoughtfully and remember that two test files might get executed at the same time
   // 💡 TIP: Within global-setup file, there is a docker-compose library that exemplifies running command within our docker-compose environment

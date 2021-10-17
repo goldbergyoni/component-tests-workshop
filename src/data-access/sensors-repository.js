@@ -59,7 +59,8 @@ module.exports = class SensorsRepository {
 
   async addSensorsEvent(event) {
     try {
-      return await sensorEventModel.create(event);
+      const DBResponse = await sensorEventModel.create(event);
+      return DBResponse.dataValues;
     } catch (error) {
       if (error.name === 'SequelizeUniqueConstraintError') {
         throw new AppError('duplicated-event', true, 409);

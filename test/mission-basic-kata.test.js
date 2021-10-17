@@ -11,6 +11,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
+const { default: axios } = require('axios');
 
 let expressApp;
 
@@ -48,7 +49,6 @@ describe('Sensors test', () => {
     // Arrange
     const eventToAdd = {
       temperature: 20,
-      name: 'Thermostat-temperature', // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
@@ -71,7 +71,6 @@ describe('Sensors test', () => {
     // Arrange
     const eventToAdd = {
       temperature: 20,
-      //name: 'Thermostat-temperature', // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
