@@ -52,7 +52,7 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
-      category: 'Something',
+      category: undefined,
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
 
@@ -60,9 +60,13 @@ describe('Sensors test', () => {
 
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: verify that status is 400
+    expect(receivedResult.status).toBe(400);
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
@@ -86,7 +90,7 @@ describe('Sensors test', () => {
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-    // 💡 TIP: verify that status is 400
+    // 💡 TIP: verify that status is 200
     expect(receivedResult).toMatchObject({
       status: 200,
       body: eventToAdd,
@@ -96,6 +100,25 @@ describe('Sensors test', () => {
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
+  test('When a new valid event is posted to /sensor-events route, it is indeed retrievable from the DB', async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: getShortUnique(),
+    };
+
+     // Act
+     await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+     // Assert
+     const retrievableEventResponse = await request(expressApp).get(
+      `/sensor-events/${eventToAdd.category}/reason`,
+    );
+    expect(retrievableEventResponse.body).toMatchObject([eventToAdd]);
+  });
 
   // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
   // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation

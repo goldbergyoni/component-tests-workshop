@@ -23,23 +23,26 @@ afterAll(async () => {
 
 beforeEach(() => {});
 
-afterEach(() => {});
+afterEach(() => {
+  nock.clearAll();
+});
 
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?
   // 💡 TIP: When setting high temperature event, then a notification is sent with HTTP request
-  test('When adding a valid event, Then should get successful confirmation', async () => {
+  test.only('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = getSensorEvent({ temperature: 60 });
+    nock('http://localhost').post('/notification/default').reply(200, { success: true });
 
-    // 💡 TIP: Uncomment me to make this test fail and realize why
-    // // Act
-    // const receivedResponse = await request(expressApp)
-    //   .post('/sensor-events')
-    //   .send(eventToAdd);
+    //💡 TIP: Uncomment me to make this test fail and realize why
+    // Act
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
-    // Assert
-    // expect(receivedResponse.status).toBe(200);
+    //Assert
+    expect(receivedResponse.status).toBe(200);
   });
 
   // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
@@ -64,17 +67,17 @@ describe('Sensors test', () => {
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
     // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
     // and the URL will have an address that is unique to this test
-    /*
     nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
         (payload) => (notificationPayload = payload),
       ).reply(200, {success: true,});
-      */
 
     // Act
+    await request(expressApp).post(expressApp).setEncoding(eventToAdd);
 
     // Assert
     // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
     // You may call whether this URL was called using - scope.isDone()
+    expect(scope.isDone()).toBeTrue();
   });
 
   // ✅ TASK: In the test above that checks for notification, ensure that the request body was valid. Otherwise, our code
@@ -102,24 +105,92 @@ describe('Sensors test', () => {
 // ✅🚀 There is some naughty code that is issuing HTTP requests without our awareness! Find it and nock it!
 // 💡 TIP: When approaching real HTTP requests during testing, this might incur costs, performance issues and mostly flakiness
 // 💡 TIP: Nock allows you to prevent this using the command nock.enableNetConnect(). Just make sure to allow 127.0.0.1 calls since this is the internal API
+/* Please check beforeAll block */
 
-// ✅🚀 When this tets suite (file) is done, ensure to clean-up and enable network requests - Maybe other test files do wish to approach external resources
+// ✅🚀 When this test suite (file) is done, ensure to clean-up and enable network requests - Maybe other test files do wish to approach external resources
 // 💡 TIP: Nock intercepts any calls within the same process. Anything that is not reset here will affect the next tests
+/* Please check afterAll block */
 
 // ✅🚀  TASK: Write the same test like above 👆, but this time when the response arrives with some delay
 // 💡 TIP: Some code contains races between multiple tasks (e.g. Promise.race), for example when waiting for the request for sometime
 // and after sometime invoking alternative code. If the request will always bounce back too quick - The alternative path will never be tested
 // 💡 TIP: Nock is capable of simulating delays: nock(url).post(path).delay(timeInMillisecond)
 
+test('When emitting a new event and the notification service replies with 500 error, then the added event was still saved successfully', async () => {
+  // Arrange
+  const eventToAdd = getSensorEvent({
+    temperature: 80, 
+    notificationCategory: getShortUnique(),
+  });
+
+  nock('http://localhost')
+    .post(`/notification/${eventToAdd.notificationCategory}`)
+    .delay(4000)
+    .reply(500, {success: false});
+
+  // Act
+  const receivedResponse = await request(expressApp)
+  .post('/sensor-events')
+  .send(eventToAdd);
+
+  // Assert
+  const {id} = receivedResponse.body;
+  const retrievedEvent = await request(expressApp).get(`/sensor-events/${id}`);
+  expect(retrievedEvent).toBeTruthy();
+});
+
+
 // ✅🚀 TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
 // the remote service does not reply at all, we are still able to progress and save the event
 // 💡 TIP: Nock is capable of simulating timeouts without waiting for the actual timeout
 // Here's nock syntax: nock(url).post(path).delay(timeInMillisecond). Choose delay value that is just a bit bigger than Axios default
+test('When emitting a new event and the notification service replies with 500 error, then the added event was still saved successfully', async () => {
+  // Arrange
+  const eventToAdd = getSensorEvent({
+    temperature: 80, 
+    notificationCategory: getShortUnique(),
+  });
+
+  nock('http://localhost')
+    .post(`/notification/${eventToAdd.notificationCategory}`)
+    .delayConnection(2000)
+    .reply(500, {success: false});
+
+  // Act
+  const receivedResponse = await request(expressApp)
+  .post('/sensor-events')
+  .send(eventToAdd);
+
+  // Assert
+  const {id} = receivedResponse.body;
+  const retrievedEvent = await request(expressApp).get(`/sensor-events/${id}`);
+  expect(retrievedEvent).toBeTruthy();
+});
+
 
 // ✅🚀 TASK: Write the following test below
 // 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
-test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', () => {
+test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
   // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
   // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
   // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
+
+  // Arrange
+  const eventToAdd = getSensorEvent({
+    temperature: 80, 
+    notificationCategory: getShortUnique(), 
+  });
+  const nockScope = nock('http://localhost')
+    .post(`/notification/${eventToAdd.notificationCategory}`)
+    .times(1).reply(500, {success: false})
+    .post(`/notification/${eventToAdd.notificationCategory}`)
+    .reply(200, {success: true})
+
+  // Act
+  await request(expressApp)
+    .post('/sensor-events')
+    .send(eventToAdd);
+
+  // Assert
+  expect(nockScope.isDone()).toBe(true);
 });
