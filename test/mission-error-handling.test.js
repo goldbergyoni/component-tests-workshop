@@ -59,6 +59,7 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400);
   });
 
   // ✅ TASK: Code the following test below
@@ -67,13 +68,20 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent();
     // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
     // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
+
     sinon
-      .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
+      .stub(SensorsRepository.prototype, 'addSensorsEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
+
+
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    expect(receivedResult.status).toBe(500);
   });
 
   // ✅ TASK: Code the following test below
@@ -82,16 +90,24 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
     // Arrange
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
-
+    const eventToAdd = getSensorEvent();
     const spyOnLogger = sinon.spy(console, 'error');
+    const error = new AppError('db-is-unaccessible', true, 500);
+    sinon
+      .stub(SensorsRepository.prototype, 'addSensorsEvent')
+      .rejects(error);
 
     // Act
+    await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
     // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
+    expect(spyOnLogger.calledWith(error)).toBe(true)
   });
 
   // ✅ TASK: Code the following test below
