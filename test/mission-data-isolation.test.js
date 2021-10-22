@@ -30,14 +30,13 @@ beforeEach(() => {
 });
 
 describe('Sensors test', () => {
-  // ✅ TASK: Write the following test 👇 to ensure adding an event succeed
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `Thermostat-failed ${Date.now()}`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
@@ -46,17 +45,23 @@ describe('Sensors test', () => {
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResult = await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(receivedResult).toMatchObject({
+      status: 200,
+      body: {
+        ...eventToAdd,
+        id: expect.toBeNumber()
+      },
+    });
   });
 
-  // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
   // 💡 TIP: The failure is because the field 'reason' is unique. When the test runs for the second time -> This value already exists
   // 💡 TIP: Write an helper function that create unique and short value, put this at the end of the reason field
   // 💡 TIP: For the sake of this exercise, this helper can be as simple as just randomize number or use a timestamp
 
-  // ✅ TASK: In the test above 👆, ensure that 'id' field is also part of the response with the right type
   // But hey, there is a challenge here: The 'id' is different in every response
   // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
   //  https://jestjs.io/docs/en/expect#expectanyconstructor

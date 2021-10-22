@@ -35,7 +35,6 @@ afterEach(() => {
 });
 
 describe('Sensors test', () => {
-  // ✅ TASK: Run the testing and ensure the the next simplistic test pass
   test('Just checking that testing works on your machine', () => {
     expect('Me enjoying in the integration test workshop').toBeTruthy();
     // 💡 TIP: The the tests in watch mode: npm run test:dev
@@ -43,7 +42,6 @@ describe('Sensors test', () => {
     //  It should run only this file. Click "w" to return to the main menu
   });
 
-  // ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
   // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
@@ -53,19 +51,21 @@ describe('Sensors test', () => {
       weight: 80,
       status: 'active',
       category: 'Something',
-      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined',
+      category: undefined
     };
 
     // Act
 
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
     // 💡 TIP: verify that status is 400
+    expect(response.status).toBe(400);
   });
 
-  // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
@@ -87,13 +87,20 @@ describe('Sensors test', () => {
 
     // Assert
     // 💡 TIP: verify that status is 400
+    // this was probably a mistake, we should get a 200 status here, cause the response is successful
     expect(receivedResult).toMatchObject({
+      status: 200,
+      body: eventToAdd,
+    });
+
+    const addedResult = await request(expressApp).get(`/sensor-events/${receivedResult.body.id}`);
+
+    expect(addedResult).toMatchObject({
       status: 200,
       body: eventToAdd,
     });
   });
 
-  // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
 
