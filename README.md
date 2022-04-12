@@ -1,9 +1,8 @@
-![Header](./graphics/workshop-banner.jpg "Component Tests")
+![Header](./graphics/workshop-banner.jpg 'Component Tests')
 
 <br/>
 
 ## Master the art of the most powerful technique for testing modern backend
-
 
 <br/>
 
@@ -11,11 +10,12 @@
 
 This workshop is a very deep dive into writing real-world and modern backend testing. Most traditional testing guides focus on testing functions and units. In their daily routine though, developers are challenged with covering all the layers of their components - Database, APIs, MQ, metrics, 3rd parties, and more - not just logic functions. This workshop is all about writing these realistic tests in the RIGHT way. Overall, it packs 25+ best practices and 20 hands-on exercises that will open your mind to modern testing techniques. 🚀. Warning: You might fall in love with testing 💚
 
-![Header](/graphics/component-diagram.jpg "Component Tests")
+![Header](/graphics/component-diagram.jpg 'Component Tests')
 
 <br/><br/><br/>
 
 # Let's get prepared for the workshop
+
 A good leasson starts with a good preparation, your attention is needed here
 
 ## Prerequisites
@@ -27,7 +27,6 @@ Let's go over a short checklist to ensure that this workshop will be benefical f
 - You know what is the purpose of testing and wrote at least few tests in the past. If not, [this is a great video to start with](https://www.youtube.com/watch?v=r9HdJ8P6GQI) - Please watch and try writing few tests
 - Your computer has at least 16gb of RAM
 
-
 ## Preparation
 
 As we meet in the classroom we wish to spend our precious time on interesting development challenges rather than machine setup. Make sure to prepare your machine aforehand. Should you encounter any issue - please open an issue within this repo and I'll be sure to assist shortly
@@ -36,7 +35,7 @@ As we meet in the classroom we wish to spend our precious time on interesting de
 
 ### ✅ 1 Install Node.JS 12.8
 
-Install Node.JS version 12.8.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all be on the same page. 
+Install Node.JS version 12.8.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all be on the same page.
 
 Alternativelly [use nvm](https://github.com/nvm-sh/nvm), install it and then after cloning this repo run:
 
@@ -77,7 +76,7 @@ npm i
 
 ### ✅❗️ 6 Ensure that testing works
 
-Run the following command and ensure that the output confirms that all the test succeeded. 
+Run the following command and ensure that the output confirms that all the test succeeded.
 
 ```
 npm run test
@@ -101,6 +100,7 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 ### ✅ 8 Prepare your computer for a video call
 
 Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
+
 <!--stackedit_data:
 eyJoaXN0b3J5IjpbLTEwNTU3ODkwLC0xNzcxODg2MTE3LDczMj
 I4MDA5M119

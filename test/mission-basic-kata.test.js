@@ -11,7 +11,6 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
-const { default: axios } = require('axios');
 
 let expressApp;
 
@@ -52,17 +51,18 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
-      category: 'Something',
+      category: undefined, //❌
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
 
     // Act
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-    // 💡 TIP: verify that status is 400
+    expect(receivedResponse.status).toBe(400);
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response

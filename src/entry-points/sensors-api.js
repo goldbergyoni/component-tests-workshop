@@ -3,6 +3,7 @@ const util = require('util');
 const bodyParser = require('body-parser');
 const SensorsService = require('../domain/sensors-service');
 const { errorHandler, AppError } = require('../error-handling');
+const { default: axios } = require('axios');
 
 let serverConnection;
 

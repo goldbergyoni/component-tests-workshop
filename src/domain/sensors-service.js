@@ -14,6 +14,7 @@ class SensorsEventService {
       throw new AppError('invalid-event', true, 400);
     }
 
+    // logic
     if (temperature > 50 || (category === 'kids-room' && temperature > 30)) {
       const id = Math.ceil(Math.random() * 1000);
       if (!notificationCategory) {

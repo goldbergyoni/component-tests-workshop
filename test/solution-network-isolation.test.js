@@ -5,17 +5,23 @@
 
 const request = require('supertest');
 const nock = require('nock');
+const sinon = require('sinon');
 const {
   startWebServer,
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 
+
 let expressApp;
 
+// ✅ Best Practice
 beforeAll(async (done) => {
   expressApp = await startWebServer();
+  nock.disableNetConnect();
+  nock.enableNetConnect('127.0.0.1');
   done();
+  
 });
 
 afterAll(async () => {
@@ -23,6 +29,7 @@ afterAll(async () => {
   nock.enableNetConnect();
 });
 
+// ✅ Best Practice
 beforeEach(() => {
   nock('http://localhost')
     .post('/notification/default')
@@ -34,6 +41,7 @@ beforeEach(() => {
 
 afterEach(() => {
   nock.cleanAll();
+  sinon.restore();
 });
 
 afterAll(() => {});
@@ -72,6 +80,7 @@ describe('Sensors test', () => {
       temperature: 51,
       notificationCategory: getShortUnique(),
     });
+    // ✅ Best Practice
     let notificationPayload;
     nock('http://localhost')
       .post(
@@ -113,7 +122,8 @@ describe('Sensors test', () => {
         `/notification/${eventToAdd.notificationCategory}`,
         (payload) => (notificationPayload = payload),
       )
-      .reply(500);
+      .delay(100)
+      .once(2)      .reply(500);
 
     // Act
     await request(expressApp).post('/sensor-events').send(eventToAdd);
