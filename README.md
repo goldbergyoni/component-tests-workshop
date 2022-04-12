@@ -34,9 +34,9 @@ As we meet in the classroom we wish to spend our precious time on interesting de
 
 ❗️ If one of these steps fail - Please create an issue here at least 24 hours before the workshop
 
-### ✅ 1 Install Node.JS 12.8
+### ✅ 1 Install Node.JS 16.1
 
-Install Node.JS version 12.8.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all be on the same page. 
+Install Node.JS version 16.1.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all be on the same page. 
 
 Alternativelly [use nvm](https://github.com/nvm-sh/nvm), install it and then after cloning this repo run:
 
