@@ -2,7 +2,7 @@
 
 <br/>
 
-## Master the art of the most powerful technique for testing modern backend
+## Master Node.js Testing
 
 <br/>
 
@@ -35,9 +35,9 @@ As we meet in the classroom we wish to spend our precious time on interesting de
 
 ### ✅ 1 Install Node.JS 16.1
 
-Install Node.JS version 16.1.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all be on the same page. 
+Install Node.JS version 16.1.0 [from this website](https://nodejs.org/en/) - just download and progress within the installation wizard. It's important to install this version exactly so we will all be on the same page.
 
-Alternativelly [use nvm](https://github.com/nvm-sh/nvm), install it and then after cloning this repo run:
+Alternatively and preferably, [use nvm](https://github.com/nvm-sh/nvm), install it and then after cloning this repo run:
 
 ```
 nvm install
@@ -60,7 +60,7 @@ Please ensure that no error messages were presented during the execution
 
 ### ✅ 4 Install IDE (editor)
 
-I highly recommend using VSCode editor in the course as it's lightweight and has a very rich plugins eco-sysem that we might use during our excercise. Simply visit the [downloads site](https://code.visualstudio.com/download) and choose the edition that suits your operations system. You may opt for any other editor that supports Node debugging and intellisense
+Any reputable editor is good. I personally use VSCode editor which is lightweight and has a very rich plugins eco-sysem. Simply visit the [downloads site](https://code.visualstudio.com/download) and choose the edition that suits your operations system. You may opt for any other editor that supports Node debugging and intellisense
 
 ### ✅ 4 Fork this repo
 
