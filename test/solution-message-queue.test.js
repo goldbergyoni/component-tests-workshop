@@ -94,38 +94,3 @@ test('When a new event is posted via API, then a message is put in the analytics
     eventToAdd,
   ]);
 });
-
-// // ️️️✅ Best Practice: Verify that messages are put in queue whenever the requirements state so
-// test('When a valid order is added, then a message is emitted to the new-order queue', async () => {
-//   //Arrange
-//   const orderToAdd = {
-//     userId: 1,
-//     productId: 2,
-//     mode: 'approved',
-//   };
-//   const spyOnSendMessage = sinon.spy(MessageQueueClient.prototype, 'publish');
-
-//   //Act
-//   await axiosAPIClient.post('/order', orderToAdd);
-
-//   // Assert
-//   expect(spyOnSendMessage.lastCall.args[0]).toBe('order.events');
-//   expect(spyOnSendMessage.lastCall.args[1]).toBe('order.events.new');
-// });
-
-// test.todo('When an error occurs, then the message is not acknowledged');
-// test.todo(
-//   'When a new valid user-deletion message is processes, then the message is acknowledged',
-// );
-// test.todo(
-//   'When two identical create-order messages arrives, then the app is idempotent and only one is created',
-// );
-// test.todo(
-//   'When occasional failure occur during message processing , then the error is handled appropriately',
-// );
-// test.todo(
-//   'When multiple user deletion message arrives, then all the user orders are deleted',
-// );
-// test.todo(
-//   'When multiple user deletion message arrives and one fails, then only the failed message is not acknowledged',
-// );
