@@ -1,35 +1,45 @@
-class MessageQueueConnector {
-  subscribe(topicName, callback) {
-    console.log('Subscribe was called');
-    setTimeout(() => {
-      callback({
-        data: 'real data from real MQ',
-      });
-    }, 1000);
+const MessageQueueClient = require('../libraries/message-queue/mq-client');
+const { errorHandler, AppError } = require('../error-handling');
+const SensorsService = require('../domain/sensors-service');
+
+// This is message queue entry point. Like API routes but for message queues.
+class QueueSubscriber {
+  constructor(messageQueueClient, queueName, deadLetterQueue) {
+    this.messageQueueClient = messageQueueClient;
+    this.queueName = queueName;
+    this.deadLetterQueue = deadLetterQueue;
   }
 
-  publish(message) {
-    console.log('Message was published');
+  async start() {
+    await this.consumeNewSensorEventQueue();
+  }
+
+  async consumeNewSensorEventQueue() {
+    // Let's now register to new delete messages from the queue
+    return await this.messageQueueClient.consume(
+      this.queueName,
+      async (message) => {
+        // Validate to ensure it is not a poisoned message (invalid) that will loop into the queue
+        const newMessageAsObject = JSON.parse(message);
+
+        // ️️️✅ Best Practice: Validate incoming MQ messages using your validator framework (simplistic implementation below)
+        if (!newMessageAsObject.category) {
+          throw new AppError('invalid-message', 'Unknown message schema');
+        }
+
+        const sensorsService = new SensorsService();
+        const response = await sensorsService.addEvent(newMessageAsObject);
+      },
+    );
   }
 }
 
-class MailerService {
-  sendMail(toWhom, title, body) {
-    console.log(`Send mail with ${body}`);
-  }
-}
+process.on('uncaughtException', (error) => {
+  errorHandler.handleError(error);
+});
 
-class SensorsTopicSubscriber {
-  start() {
-    const messageQueue = new MessageQueueConnector();
-    console.log('Starting the charging subscriber, about to listen to MQ topic');
-    messageQueue.subscribe('sensors-queue', (message) => {
-      // typical MQ interface
-      new MailerService().sendMail('admin@system.io', 'High temperature!', 'Body with text');
-    });
-  }
-}
+process.on('unhandledRejection', (reason) => {
+  errorHandler.handleError(reason);
+});
 
-module.exports.sensorsTopicSubscriber = SensorsTopicSubscriber;
-module.exports.mailService = mailService;
-module.exports.messageQueueConnector = messageQueueConnector;
+module.exports = { QueueSubscriber };

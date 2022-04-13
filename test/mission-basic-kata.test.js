@@ -56,7 +56,9 @@ describe('Sensors test', () => {
     };
 
     // Act
-    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
