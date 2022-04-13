@@ -14,11 +14,10 @@ class MessageQueueClient extends EventEmitter {
     // To facilitate testing, the client allows working with a fake MQ provider
     // It can get one in the constructor here or even change by environment variables
     // For the sake of simplicity HERE, since it's demo code - The default is a fake MQ
-    if (customMessageQueueProvider) {
-      // In real-world app, we really allow here getting custom provider and by default
-      //approaching amqplib. For demo purposes, we always use the fake
-      this.messageQueueProvider = new FakeMessageQueueProvider();
-    }
+
+    // In real-world app, we really allow here getting custom provider and by default
+    //approaching amqplib. For demo purposes, we always use the fake
+    this.messageQueueProvider = new FakeMessageQueueProvider();
 
     this.countEvents();
   }

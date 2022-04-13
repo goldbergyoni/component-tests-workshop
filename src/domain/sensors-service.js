@@ -3,6 +3,7 @@ const axiosRetry = require('axios-retry');
 const sanitizeService = require('../domain/sanitize-service');
 const SensorsDal = require('../data-access/sensors-repository');
 const { AppError } = require('../error-handling');
+const MessageQueueClient = require('../libraries/message-queue/mq-client');
 
 class SensorsEventService {
   async addEvent(eventToHandle) {
@@ -39,9 +40,16 @@ class SensorsEventService {
     }
 
     const sensorsRepository = new SensorsDal();
-    const DBResponse = await sensorsRepository.addSensorsEvent(eventToHandle);
+    const fullEventInfo = await sensorsRepository.addSensorsEvent(
+      eventToHandle,
+    );
+    await new MessageQueueClient().publish(
+      'analytics.events',
+      'analytics.new',
+      fullEventInfo,
+    );
 
-    return DBResponse;
+    return fullEventInfo;
   }
 
   async getSensorById(id) {
