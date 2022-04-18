@@ -97,8 +97,7 @@ Learning Node requires to be familiar with Javascript. Beside mastering the basi
 <br/>
 [Classes](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)
 
-[Remote workshop only 👇]
-### ✅ 8 Prepare your computer for a video call
+### 8 ✅ Remote workshop only: Prepare your computer for a video call
 
 The following is needed for Zoom-based workshops only: Install the online calls software [Zoom](https://zoom.us/download), connect your camera and run a [test call](https://zoom.us/test) to ensure your equipment is ready. If Zoom is already installed on your machine, please update it to its latest version
 
