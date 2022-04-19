@@ -87,6 +87,10 @@ describe('Sensors test', () => {
   // ✅ TASK: Let's fix the query test above 👆 - Make it pass all the time, even when running alone
   // 💡 TIP: In the arrange phase, add an event to query for. Don't trust any other test!
 
+  // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
+  // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
+  // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
+
   // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
 
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records

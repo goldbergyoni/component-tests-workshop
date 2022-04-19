@@ -27,7 +27,7 @@ afterEach(() => {});
 
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?
-  // 💡 TIP: When setting high temperature event, then a notification is sent with HTTP request
+  // 💡 TIP: When setting high temperature event, then a notification is sent with HTTP request. This URL/Service are not available on your local machine
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = getSensorEvent({ temperature: 60 });
