@@ -51,48 +51,31 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
-      category: undefined, //❌
+      category: 'Kids-Room',
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
 
     // Act
-    const receivedResponse = await request(expressApp)
-      .post('/sensor-events')
-      .send(eventToAdd);
 
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-    expect(receivedResponse.status).toBe(400);
+
+    // 💡 TIP: Check that the received response is indeed as stated in the test name
+    // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
-    const eventToAdd = {
-      temperature: 20,
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-      category: 'Something',
-      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
-    };
-
     // Act
-    const receivedResult = await request(expressApp)
-      .post('/sensor-events')
-      .send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
-
     // Assert
-    // 💡 TIP: verify that status is 400
-    expect(receivedResult).toMatchObject({
-      status: 200,
-      body: eventToAdd,
-    });
+    // 💡 TIP: You may check the body and the status all together with the following syntax:
+    // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB

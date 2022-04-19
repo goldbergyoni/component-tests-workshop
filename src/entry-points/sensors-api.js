@@ -72,6 +72,12 @@ function defineAllRoutes(expressApp) {
     res.json(sensorToReturn);
   });
 
+  router.delete('/sensor-events/:id', async (req, res, next) => {
+    const sensorsService = new SensorsService();
+    const sensorToReturn = await sensorsService.deleteSensorById(req.params.id);
+    res.json(sensorToReturn);
+  });
+
   // get existing events with filters
   router.get('/sensor-events/:category/:sortBy', async (req, res, next) => {
     const sensorsService = new SensorsService();

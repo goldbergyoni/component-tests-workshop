@@ -87,6 +87,8 @@ describe('Sensors test', () => {
   // ✅ TASK: Let's fix the query test above 👆 - Make it pass all the time, even when running alone
   // 💡 TIP: In the arrange phase, add an event to query for. Don't trust any other test!
 
+  // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
+
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
@@ -115,5 +117,14 @@ describe('Sensors test', () => {
   // 💡 TIP: Within global-setup file, there is a docker-compose library that exemplifies running command within our docker-compose environment
 
   // ✅🚀  TASK: Test that querying for /sensor-events route (i.e. get all) and sorting by the field 'temperature', the results are indeed sorted
+  // 💡 TIP: The following route allows sorting by specific field: /sensor-events/:category/:sortBy
   // 💡 TIP: Each test should be independent and might run alone without others, don't count on data (events) from other tests
+
+  // ✅🚀  TASK: Test that querying for /sensor-events route (i.e. get all) and sorting by the field 'temperature', the results are indeed sorted
+  // 💡 TIP: The following route allows sorting by specific field: /sensor-events/:category/:sortBy
+  // 💡 TIP: Each test should be independent and might run alone without others, don't count on data (events) from other tests
+
+  // ✅🚀  TASK: Test when a sensor event is deleted, the code is not mistakenly deleting data that was not
+  // supposed to be deleted
+  // 💡 TIP: You may need to add more than one event to achieve this
 });

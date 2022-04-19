@@ -56,6 +56,10 @@ class SensorsEventService {
     return await new SensorsDal().getSensorById(id);
   }
 
+  async deleteSensorById(id) {
+    return await new SensorsDal().deleteSensorById(id);
+  }
+
   async getEventsByCategory(category, sortBy = 'category') {
     return await new SensorsDal().getEventsByCategory(category, sortBy);
   }

@@ -74,6 +74,10 @@ module.exports = class SensorsRepository {
     return await sensorEventModel.findOne({ where: { id: id } });
   }
 
+  async deleteSensorById(id) {
+    return await sensorEventModel.destroy({ where: { id: id } });
+  }
+
   async getEventsByCategory(category, sortBy = 'category') {
     return await sensorEventModel.findAll({
       order: [[sortBy, 'ASC']],

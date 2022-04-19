@@ -163,6 +163,31 @@ describe('Sensors test', () => {
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
+  // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
+  test('When deleting an event, then it is not publicly available anymore', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed-${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+    const toBeDeletedEventId = (
+      await request(expressApp).post('/sensor-events').send(eventToAdd)
+    ).body.id;
+
+    // Act
+    await request(expressApp).delete(`/sensor-events/${toBeDeletedEventId}`);
+
+    // Assert
+    const hopefullyNonExistingEvent = await request(expressApp).get(
+      `/sensor-events/${toBeDeletedEventId}`,
+    );
+    expect(hopefullyNonExistingEvent.body).toBeNull();
+  });
+
   // ✅🚀 TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
   // Check that when adding two events at the same time, both are saved successfully
   // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
@@ -172,7 +197,7 @@ describe('Sensors test', () => {
   //  Check that these fields are not null and have the right schema
   // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
   //  https://jestjs.io/docs/en/expect#expectanyconstructor
-  test.only('When adding a valid event, we get back all fields in response', async () => {
+  test('When adding a valid event, we get back all fields in response', async () => {
     // Arrange
     const eventToAdd = getSensorEvent({});
 
