@@ -123,3 +123,9 @@ test('When emitting event and the notification service fails once, then a notifi
   // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
   // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
 });
+
+// ✅🚀 TASK: Ensure that if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue
+// 💡 TIP: In the root of the code, you may find the file openapi.json that documents the APIs
+// 💡 TIP: Use jest-open-api tool to help with this mission:
+// https://www.npmjs.com/package/jest-openapi
+//💡 TIP: If you want to apply this to all tests, put this assertion as axios extension
