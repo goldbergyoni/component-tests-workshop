@@ -30,6 +30,7 @@ beforeEach(() => {
 });
 
 describe('Sensors test', () => {
+  let firstAdded;
   // ✅ TASK: Write the following test 👇 to ensure adding an event succeed
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
@@ -37,7 +38,7 @@ describe('Sensors test', () => {
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `Thermostat-failed-${getShortUnique()}`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
@@ -46,9 +47,18 @@ describe('Sensors test', () => {
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const apiResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    firstAdded = apiResponse.body;
 
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(apiResponse).toMatchObject({
+      status: 200,
+      body: {
+        ...eventToAdd,
+        id: expect.any(Number),
+      },
+    });
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
@@ -63,15 +73,42 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
+  test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed-${getShortUnique()}`,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    // Act
+    const firstApiResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const secondApiResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    // Both failed with 409, which shouldn't be the case
+    expect(firstApiResponse).toMatchObject({ status: 200 });
+    expect(secondApiResponse).toMatchObject({
+      status: 409,
+      body: {},
+    })
+  });
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
+  test('When querying for event by id, Then the right event is being returned', async () => {
     // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
     //  the ID of the added event globally). In this test, query for that ID
+    const apiResponse = await request(expressApp).get(`/sensor-events/${firstAdded.id}`);
+
+    expect(apiResponse).toMatchObject({
+      status: 200,
+      body: firstAdded,
+    })
     // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
   });
 

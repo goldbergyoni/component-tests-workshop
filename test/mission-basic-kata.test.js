@@ -31,6 +31,7 @@ beforeEach(() => {
 
 afterEach(() => {
   sinon.restore();
+  nock.cleanAll();
 });
 
 describe('Sensors test', () => {
@@ -88,7 +89,6 @@ describe('Sensors test', () => {
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-    // 💡 TIP: verify that status is 400
     expect(receivedResult).toMatchObject({
       status: 200,
       body: eventToAdd,
@@ -98,10 +98,60 @@ describe('Sensors test', () => {
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
+  test('When inserting a valid event, it should be retrievable from the DB', async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Something',
+    };
+
+    // Act
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+    const receivedResultId = receivedResult.body.id;
+
+    // Assert
+    const retrievedFromDB = await request(expressApp)
+      .get(`/sensor-events/${receivedResultId}`);
+    expect(retrievedFromDB).toMatchObject({
+      status: 200,
+      body: eventToAdd,
+    });
+  });
 
   // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
   // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
   // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
+  test('When inserting an event without specified temperature, it should not be saved nor be retrievable from the DB', async () => {
+    // Arrange
+    const eventToAdd = {
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Something',
+    };
+
+    // Act
+    const allEventsBefore = await request(expressApp).get('/sensor-events');
+    const numberOfEventsBefore = allEventsBefore.length;
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    // 💡 TIP: verify that status is 400
+    expect(receivedResult).toMatchObject({
+      status: 400,
+      body: {},
+    });
+    const allEventsAfter = await request(expressApp).get('/sensor-events');
+    const numberOfEventsAfter = allEventsAfter.length;
+    expect(numberOfEventsAfter).toBe(numberOfEventsBefore);
+  });
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
@@ -109,6 +159,25 @@ describe('Sensors test', () => {
   // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right event when a single event exist
   // 💡 TIP: Ensure that exactly one was returned and that this is the right event
   // 💡 TIP: Try using as few assertions as possible, maybe even only one. expect(apiResponse).toMatchObject({//expected object here})
+  test('All events should be retrieved even if only one exists', async () => {
+    // Arrange
+    const eventToAdd = {
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Something',
+    };
+
+    // Act
+    await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    // 💡 TIP: verify that status is 400
+    console.log((await request(expressApp).get('/sensor-events')).body)
+    expect(await request(expressApp).get('/sensor-events')).toMatchObject({ ...eventToAdd, status: 200 });
+  });
 
   // ✅ TASK: Test that querying the GET:/sensor-events route, it returns the right events when multiple events exist
   // 💡 TIP: Ensure that all the relevant events were returned
