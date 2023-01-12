@@ -1,8 +1,7 @@
 const isPortReachable = require('is-port-reachable');
 const path = require('path');
 const dockerCompose = require('docker-compose');
-const npm = require('npm');
-const util = require('util');
+const { execSync } = require('child_process');
 
 module.exports = async () => {
   console.time('global-setup');
@@ -22,18 +21,11 @@ module.exports = async () => {
       },
     );
 
-    await migrate();
+    execSync('npm run db:migrate');
   } else if (process.env.DO_MIGRATION === 'true') {
-    await migrate();
+    execSync('npm run db:migrate');
   }
 
   // 👍🏼 We're ready
   console.timeEnd('global-setup');
 };
-
-async function migrate() {
-  const npmLoadAsPromise = util.promisify(npm.load);
-  await npmLoadAsPromise();
-  const npmCommandAsPromise = util.promisify(npm.commands.run);
-  await npmCommandAsPromise(['db:migrate']);
-}

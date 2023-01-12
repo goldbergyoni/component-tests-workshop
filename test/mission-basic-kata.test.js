@@ -14,9 +14,8 @@ const sinon = require('sinon');
 
 let expressApp;
 
-beforeAll(async (done) => {
+beforeAll(async () => {
   expressApp = await startWebServer();
-  done();
 });
 
 afterAll(async () => {
@@ -36,7 +35,7 @@ afterEach(() => {
 describe('Sensors test', () => {
   // ✅ TASK: Run the testing and ensure the the next simplistic test pass
   test('Just checking that testing works on your machine', () => {
-    expect('Me enjoying in the integration test workshop').toBeTruthy();
+    expect('Me boosting my testing knowledge in the workshop').toBeTruthy();
     // 💡 TIP: The the tests in watch mode: npm run test:dev
     // 💡 TIP: When in watch mode, within the terminal/CMD type "p" -> Then start typing this file name, choose it
     //  It should run only this file. Click "w" to return to the main menu
@@ -84,8 +83,6 @@ describe('Sensors test', () => {
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
-
-  
 
   // ✅🚀 TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {

@@ -18,9 +18,8 @@ const {
 
 let expressApp;
 
-beforeAll(async (done) => {
+beforeAll(async () => {
   expressApp = await startWebServer();
-  done();
 });
 
 afterAll(async () => {

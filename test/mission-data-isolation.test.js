@@ -13,9 +13,8 @@ const { getShortUnique, getSensorEvent } = require('./test-helper');
 
 let expressApp;
 
-beforeAll(async (done) => {
+beforeAll(async () => {
   expressApp = await startWebServer();
-  done();
 });
 
 afterAll(async () => {

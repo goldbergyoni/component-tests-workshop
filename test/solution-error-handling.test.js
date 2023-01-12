@@ -16,9 +16,8 @@ const SensorsRepository = require('../src/data-access/sensors-repository');
 const { AppError, metricsExporter } = require('../src/error-handling');
 let expressApp;
 
-beforeAll(async (done) => {
+beforeAll(async () => {
   expressApp = await startWebServer();
-  done();
 });
 
 afterAll(async () => {

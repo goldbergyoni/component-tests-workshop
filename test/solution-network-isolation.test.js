@@ -12,16 +12,13 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 
-
 let expressApp;
 
 // ✅ Best Practice
-beforeAll(async (done) => {
+beforeAll(async () => {
   expressApp = await startWebServer();
   nock.disableNetConnect();
   nock.enableNetConnect('127.0.0.1');
-  done();
-  
 });
 
 afterAll(async () => {
@@ -123,7 +120,8 @@ describe('Sensors test', () => {
         (payload) => (notificationPayload = payload),
       )
       .delay(100)
-      .once(2)      .reply(500);
+      .once(2)
+      .reply(500);
 
     // Act
     await request(expressApp).post('/sensor-events').send(eventToAdd);
