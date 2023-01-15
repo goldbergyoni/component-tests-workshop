@@ -40,6 +40,9 @@ describe('Sensors test', () => {
     // 💡 TIP: When in watch mode, within the terminal/CMD type "p" -> Then start typing this file name, choose it
     //  It should run only this file. Click "w" to return to the main menu
   });
+  
+  test('loo', ()=>{
+  })
 
   // ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
   // 💡 TIP: Down below, there is an example event schema
