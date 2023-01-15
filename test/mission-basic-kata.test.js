@@ -43,6 +43,10 @@ describe('Sensors test', () => {
   
   test('loo', ()=>{
   })
+  
+    test('loo1', ()=>{
+  })
+
 
   // ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
   // 💡 TIP: Down below, there is an example event schema
