@@ -44,7 +44,7 @@ describe('Sensors test', () => {
   test('loo', ()=>{
   })
   
-    test('loo1', ()=>{
+    test('loo17', ()=>{
   })
 
 
