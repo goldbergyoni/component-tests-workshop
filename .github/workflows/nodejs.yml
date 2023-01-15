@@ -12,7 +12,6 @@ on:
 
 jobs:
   build:
-    permissions: write-all
     runs-on: ubuntu-latest
 
     steps:
@@ -29,10 +28,3 @@ jobs:
 
       - run: npm ci
       - run: npm test
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure() # run this step even if previous step failed
-        with:
-          name: JEST Tests # Name of the check run which will be created
-          path: junit.xml # Path to test results
-          reporter: jest-junit
