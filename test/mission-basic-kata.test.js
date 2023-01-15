@@ -33,7 +33,7 @@ afterEach(() => {
 });
 
 describe('Sensors test', () => {
-  // ✅ TASK: Run the testing and ensure the the next simplistic test pass
+  // ✅ TASK: Run the testing and ensure the the next simplistic test pass 
   test('Just checking that testing works on your machine', () => {
     expect('Me boosting my testing knowledge in the workshop').toBeTruthy();
     // 💡 TIP: The the tests in watch mode: npm run test:dev
