@@ -8,23 +8,30 @@ on:
     branches:
       - '*'
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Read .nvmrc
-      run: echo "##[set-output name=NVMRC;]$(cat .nvmrc)"
-      id: nvm
+      - name: Read .nvmrc
+        run: echo "##[set-output name=NVMRC;]$(cat .nvmrc)"
+        id: nvm
 
-    - name: Use Node.js (.nvmrc)
-      uses: actions/setup-node@v2
-      with:
-        node-version: "${{ steps.nvm.outputs.NVMRC }}"
+      - name: Use Node.js (.nvmrc)
+        uses: actions/setup-node@v2
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
-    - run: npm ci
-    - run: npm test
+      - run: npm ci
+      - run: npm test
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure() # run this step even if previous step failed
+        with:
+          name: Test reports # Name of the check run which will be created
+          path: junit.xml # Path to test results
+          reporter: jest-junit
