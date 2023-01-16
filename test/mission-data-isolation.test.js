@@ -127,7 +127,7 @@ describe('Sensors test', () => {
   // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
   test('when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!', async () => {
     const eventToAdd = {
-      category: 'Asaf equipment',
+      category: 'Jonny equipment',
       temperature: undefined,
       reason: getShortUnique(), // This must be unique
       color: 'Green',
@@ -135,10 +135,11 @@ describe('Sensors test', () => {
       status: 'active',
     };
     let responseEventPost = await request(expressApp).post("/sensor-events").send(eventToAdd);
-    let responseEventGet = await request(expressApp).get(`/sensor-events/${eventToAdd.category}/color`).send(eventToAdd);
+    let responseEventGet = await request(expressApp).get(`/sensor-events/${eventToAdd.category}/color`);
 
     expect(responseEventPost).toMatchObject({status: 400, body: {}});
-    expect(responseEventGet).toMatchObject({status: 200, body: {}});
+    expect(responseEventGet).toMatchObject({ status: 200 } );
+
   });
 
   // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
