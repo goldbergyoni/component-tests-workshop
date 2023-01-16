@@ -10,6 +10,7 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
+const sensorSevice =  require('../src/domain/sensors-service');
 const sinon = require('sinon');
 
 let expressApp;
@@ -50,7 +51,6 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
-      category: 'Kids-Room',
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
 
@@ -59,10 +59,14 @@ describe('Sensors test', () => {
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
+   const receivedResponse =  await request(expressApp).post("/sensor-events").send(eventToAdd);
+
     // Assert
 
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
+
+    expect(receivedResponse.status).toBe(400);
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
@@ -75,14 +79,60 @@ describe('Sensors test', () => {
     // Assert
     // 💡 TIP: You may check the body and the status all together with the following syntax:
     // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
+
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    };
+
+    const receivedResponse =  await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    expect(receivedResponse).toMatchObject({status: 200, body: {
+        temperature: 20,
+        color: 'Green',
+        weight: 80,
+        status: 'active',
+        category: 'Kids-Room',
+        // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+      }});
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
+  test('when a new valid event is posted to /sensor-events route, it\'s indeed retrievable from the DB', async () => {
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    };
+
+    const postResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    const receivedResponse = await request(expressApp).get(`/sensor-events/${postResponse.body.id}`);
+
+    expect(receivedResponse).toMatchObject({status: 200, body: {
+        id: postResponse.body.id,
+        temperature: 20,
+        color: 'Green',
+        weight: 80,
+        status: 'active',
+        category: 'Kids-Room',
+        // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+      }});
+
+  });
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
+
 
   // ✅🚀 TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
@@ -94,6 +144,21 @@ describe('Sensors test', () => {
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
     // Act
     // Assert
+
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    };
+
+    sinon.stub(sensorSevice.prototype, 'addEvent').rejects(new Error("Error explanation"));
+
+    const receivedResponse =  await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    expect(receivedResponse.status).toBe(500);
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed

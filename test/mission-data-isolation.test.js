@@ -34,13 +34,25 @@ describe('Sensors test', () => {
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = {
-      category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
+      category: 'Kids-Room',
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
+
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    expect(receivedResponse).toMatchObject({status: 200, body: {
+        temperature: 20,
+        color: 'Green',
+        weight: 80,
+        status: 'active',
+        category: 'Kids-Room',
+        // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+      }});
+
 
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
