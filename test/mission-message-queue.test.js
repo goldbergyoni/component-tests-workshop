@@ -33,11 +33,11 @@ beforeEach(() => {
   });
 });
 
-// ✅ TASK: Test that putting a sensor event in the queue, results in in a new event in the DB
+// ✅ TASK: Test that putting a sensor event in the queue, results in a new event in the DB
 // 💡 TIP: Use the public API to fetch the event and ensure it exists
 test('Whenever a new sensor event arrives, then its retrievable', async () => {
   // Arrange
-  const eventToPublish = testHelpers.getSensorEvent();
+  const eventToPublish = testHelpers.getSensorEvent({category: `category-${testHelpers.getShortUnique()}`});
   // 💡 TIP: Assign unique value to the category field, so you can query later for this unique event
 
   const messageQueueClient = await testHelpers.startMQSubscriber(
@@ -49,16 +49,31 @@ test('Whenever a new sensor event arrives, then its retrievable', async () => {
   // 💡 TIP: The message queue client has a publish function for new messages. This will go into a fake
   // in-memory queue because this is what was instructed on the statement above
 
+  await messageQueueClient.publish(
+      'sensor.events',
+      'events.new',
+      eventToPublish,
+  );
+
   // Assert
   // 💡 TIP: Use waitFor 👇 to ensure the transaction has finished it's the right time to assert
   // Here is the syntax: 'messageQueueClient.waitFor('ack', 1);'
   // 💡 TIP: Verify the expectations here
+  await messageQueueClient.waitFor('ack', 1);
+  const potentiallyExistingEvent = await request(expressApp).get(
+      `/sensor-events/${eventToPublish.category}/category`);
+  expect(potentiallyExistingEvent).toMatchObject({
+    status: 200,
+    body: [eventToPublish],
+  });
 });
 
 // ✅ TASK: Test that when an invalid event is put in the queue, then its rejected
 // 💡 TIP: Assign an invalid value to some field to make the system reject this new event
 // 💡 TIP: Use the messageQueueClient.waitFor function to wait for the reject event
-test('Whenever an invalid events arrives, then its being rejected', async () => {});
+test('Whenever an invalid events arrives, then its being rejected', async () => {
+
+});
 
 // ✅ TASK: Test the same scenario like above 👆 (invalid message), only this time ensure that the event was not saved to DB
 
