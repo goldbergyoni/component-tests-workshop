@@ -11,7 +11,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
-const SensorsRepository = require('../src/data-access/sensors-repository');
+const SensorsEventService = require('../src/domain/sensors-service');
 
 let expressApp;
 
@@ -132,15 +132,11 @@ describe('Sensors test', () => {
     };
 
     // Act
-    sinon.stub(SensorsRepository.prototype, 'getSensorById').rejects(new Error("Error explanation"));
+    sinon.stub(SensorsEventService.prototype, 'addEvent').rejects(new Error("Error explanation"));
 
-    // Assert
-    try {
-      const responseEvent = await request(expressApp).post("/sensor-events").send(eventToAdd);
-      responseEvent
-    } catch (e) {
-      expect(e.status).toBe(500);
-    }
+    const responseEvent = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    expect(responseEvent.status).toBe(500);
 
   });
 
