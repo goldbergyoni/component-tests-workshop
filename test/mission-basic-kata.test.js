@@ -135,7 +135,7 @@ describe('Sensors test', () => {
         const receivedResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
 
         // Assert
-        expect(receivedResponse.status).toMatchObject({status: 500});
+        expect(receivedResponse).toMatchObject({status: 500});
     });
 
     // ✅ Ensure that the webserver is closed when all the tests are completed
