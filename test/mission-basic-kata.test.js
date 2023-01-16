@@ -11,6 +11,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
+const SensorsRepository = require('../src/data-access/sensors-repository');
 
 let expressApp;
 
@@ -50,17 +51,17 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
-      category: 'Kids-Room',
+      category: undefined,
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
 
     // Act
-
+    const eventResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-
+    expect(eventResponse.status).toBe(400);
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
   });
@@ -69,15 +70,44 @@ describe('Sensors test', () => {
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room'
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    };
+
     // Act
+    const eventResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
     // Assert
     // 💡 TIP: You may check the body and the status all together with the following syntax:
-    // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
+    expect(eventResponse).toMatchObject({status: 200, body: {...eventToAdd}});
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
+  test('when a new valid event is posted to /sensor-events route, it\'s indeed retrievable from the DB', async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room'
+    };
+
+    // Act
+    const responseEvent = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const id = responseEvent.body.id;
+
+    // // Assert
+    const eventResponse = await request(expressApp).get(`/sensor-events/${id}`);
+    expect(eventResponse.body.id).toBe(id);
+  });
+
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
 
@@ -92,8 +122,26 @@ describe('Sensors test', () => {
     // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
     //  https://sinonjs.org/releases/latest/stubs/
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room'
+    };
+
     // Act
+    sinon.stub(SensorsRepository.prototype, 'getSensorById').rejects(new Error("Error explanation"));
+
     // Assert
+    try {
+      const responseEvent = await request(expressApp).post("/sensor-events").send(eventToAdd);
+      responseEvent
+    } catch (e) {
+      expect(e.status).toBe(500);
+    }
+
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
