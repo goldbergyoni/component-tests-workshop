@@ -142,9 +142,6 @@ test('When emitting event and the notification service fails once, then a notifi
   const receivedResponse = await request(expressApp)
     .post('/sensor-events')
     .send(eventToAdd);
-  const receivedResponse2 = await request(expressApp)
-    .post('/sensor-events')
-    .send(eventToAdd);
 
   // Assert
   let responseEventGet = await request(expressApp).get(`/sensor-events/${receivedResponse.body.id}`);
