@@ -59,7 +59,6 @@ function defineAllRoutes(expressApp) {
       if (response.notificationSent === false) {
         returnedHTTPStatus = 202;
       }
-
       res.status(returnedHTTPStatus).json(response);
     } catch (error) {
       next(error);
