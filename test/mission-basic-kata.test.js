@@ -11,7 +11,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
-const SensorsRepository = require("../src/data-access/sensors-repository");
+const SensorsEventService = require("../src/domain/sensors-service");
 
 let expressApp;
 
@@ -87,7 +87,7 @@ describe('Sensors test', () => {
         .send(eventToAdd);
 
     // Assert
-    expect(response).toBe(200);
+    expect(response.status).toBe(200);
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
@@ -114,7 +114,7 @@ describe('Sensors test', () => {
     };
 
     sinon
-        .stub(SensorsRepository.prototype, 'addSensorsEvent')
+        .stub(SensorsEventService.prototype, 'addEvent')
         .rejects(new Error('internal server error'));
 
     // Act
