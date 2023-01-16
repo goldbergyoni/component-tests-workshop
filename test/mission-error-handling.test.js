@@ -13,7 +13,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 
 const { getShortUnique, getSensorEvent } = require('./test-helper');
-const SensorsRepository = require('../src/data-access/sensors-repository');
+const sensorsService = require('../src/domain/sensors-service');
 const { AppError, metricsExporter } = require('../src/error-handling');
 let expressApp;
 
@@ -58,21 +58,31 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400);
   });
 
   // ✅ TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
     // Arrange
-    const eventToAdd = getSensorEvent();
-    // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
-    // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
-    sinon
-      .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
-    // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
-    //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+    };
+    sinon.stub(sensorsService.prototype, 'addEvent').rejects(new Error("Error explanation"));
+
+    // 💡 TIP: Factor a valid event here, otherwise the request will get rejected on start and the failure won't happen
+    // 💡 TIP: Make some internal function fail, choose any class method
+    // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
+    //  https://sinonjs.org/releases/latest/stubs/
+    // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
+    // Act
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    // Assert
+    expect(receivedResponse.status).toBe(500);
   });
 
   // ✅ TASK: Code the following test below
@@ -80,13 +90,26 @@ describe('Sensors test', () => {
   // and a good case to make an exception for
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
     // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+    };
+    const error = new Error("Error explanation");
+    sinon.stub(sensorsService.prototype, 'addEvent').rejects(error);
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
 
     const spyOnLogger = sinon.spy(console, 'error');
 
     // Act
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
+    expect(receivedResponse.status).toBe(500);
+    expect(spyOnLogger.calledOnceWith(error)).toBeTruthy();
+    // expect(spyOnLogger.callArg[0]).toMatchObject({});
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
@@ -99,7 +122,27 @@ describe('Sensors test', () => {
   // indeed fired is critical
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
-    const eventToAdd = getSensorEvent();
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+    };
+    const error = new Error("Error explanation");
+    sinon.stub(sensorsService.prototype, 'addEvent').rejects(error);
+    // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
+
+    const spyOnLogger = sinon.spy(console, 'error');
+    const spyOnMetric = sinon.spy(metricsExporter, 'fireMetric');
+
+    // Act
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    // Assert
+    expect(receivedResponse.status).toBe(500);
+    expect(spyOnLogger.calledOnceWith(error)).toBeTruthy();
+    expect(spyOnMetric.calledOnceWith('error', { errorName: 'Error' })).toBeTruthy();
 
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
