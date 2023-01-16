@@ -36,17 +36,22 @@ describe('Sensors test', () => {
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `Thermostat-failed1`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
     };
 
     // Act
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    // const receivedResponse = await request(expressApp).get("/sensor-events/:id").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
+    expect(receivedResponse).toMatchObject({status: 200, body: eventToAdd});
+
+    // expect(receivedResponse).toContain(eventToAdd)
     // 💡 TIP: Check not only the HTTP status bot also the body
   });
 
