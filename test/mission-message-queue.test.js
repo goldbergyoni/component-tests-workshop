@@ -58,7 +58,9 @@ test('Whenever a new sensor event arrives, then its retrievable', async () => {
 // ✅ TASK: Test that when an invalid event is put in the queue, then its rejected
 // 💡 TIP: Assign an invalid value to some field to make the system reject this new event
 // 💡 TIP: Use the messageQueueClient.waitFor function to wait for the reject event
-test('Whenever an invalid events arrives, then its being rejected', async () => {});
+test('Whenever an invalid events arrives, then its being rejected', async () => {
+
+});
 
 // ✅ TASK: Test the same scenario like above 👆 (invalid message), only this time ensure that the event was not saved to DB
 
