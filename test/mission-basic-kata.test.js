@@ -11,6 +11,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
+const SensorsEventService = require('../src/domain/sensors-service');
 
 let expressApp;
 
@@ -109,8 +110,18 @@ describe('Sensors test', () => {
     // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
     //  https://sinonjs.org/releases/latest/stubs/
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
+    jest
+      .spyOn(SensorsEventService.prototype, 'getSensorById')
+      .mockRejectedValueOnce(new Error('Error explanation'));
     // Act
+
+    const receivedResponse = await request(expressApp)
+      .get('/sensor-events/some-id')
+      .send();
+
     // Assert
+
+    expect(receivedResponse.status).toBe(500);
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
