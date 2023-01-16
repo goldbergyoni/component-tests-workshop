@@ -91,16 +91,26 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
     // Arrange
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
-
+    const eventToAdd = getSensorEvent();
     const spyOnLogger = sinon.spy(console, 'error');
-
+    sinon
+        .stub(SensorsRepository.prototype, 'addSensorsEvent')
+        .rejects(new AppError('db-is-unaccessible', true, 500));
     // Act
+    await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
 
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
     // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject({
+      name: 'db-is-unaccessible',
+      stack: expect.any(String),
+      message: expect.any(String),
+    });
   });
 
   // ✅ TASK: Code the following test below
@@ -110,6 +120,16 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
+    const spyOnLogger = sinon.spy(console, 'error');
+    sinon
+        .stub(SensorsRepository.prototype, 'addSensorsEvent')
+        .rejects(new AppError('db-is-unaccessible', true, 500));
+
+    // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(spyOnLogger.called).toBe(true);
 
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
