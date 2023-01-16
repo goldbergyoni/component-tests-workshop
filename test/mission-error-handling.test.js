@@ -58,6 +58,8 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400);
+
   });
 
   // ✅ TASK: Code the following test below
@@ -66,13 +68,21 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent();
     // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
     // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
+
     sinon
-      .stub(someClass.prototype, 'someMethod')
+      .stub(SensorsRepository.prototype, 'addSensorsEvent')
       .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
+
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+
+    // Act
+    const receivedResult = await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
+
+    // Assert
+    expect(receivedResult.status).toBe(500);
   });
 
   // ✅ TASK: Code the following test below
