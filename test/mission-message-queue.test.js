@@ -37,7 +37,7 @@ beforeEach(() => {
 // 💡 TIP: Use the public API to fetch the event and ensure it exists
 test('Whenever a new sensor event arrives, then its retrievable', async () => {
   // Arrange
-  const eventToPublish = testHelpers.getSensorEvent();
+  const eventToPublish = testHelpers.getSensorEvent({category: `category-${testHelpers.getShortUnique()}`});
   // 💡 TIP: Assign unique value to the category field, so you can query later for this unique event
 
   const messageQueueClient = await testHelpers.startMQSubscriber(
@@ -48,17 +48,41 @@ test('Whenever a new sensor event arrives, then its retrievable', async () => {
   // Act
   // 💡 TIP: The message queue client has a publish function for new messages. This will go into a fake
   // in-memory queue because this is what was instructed on the statement above
+  await messageQueueClient.publish('sensor.events', 'events.new', eventToPublish,);
 
   // Assert
   // 💡 TIP: Use waitFor 👇 to ensure the transaction has finished it's the right time to assert
   // Here is the syntax: 'messageQueueClient.waitFor('ack', 1);'
   // 💡 TIP: Verify the expectations here
+  await messageQueueClient.waitFor('ack', 1);
+  const potentiallyExistingEvent = await request(expressApp).get(`/sensor-events/${eventToPublish.category}/category`);
+  expect(potentiallyExistingEvent).toMatchObject({status: 200, body: [eventToPublish],});
 });
 
 // ✅ TASK: Test that when an invalid event is put in the queue, then its rejected
 // 💡 TIP: Assign an invalid value to some field to make the system reject this new event
 // 💡 TIP: Use the messageQueueClient.waitFor function to wait for the reject event
-test('Whenever an invalid events arrives, then its being rejected', async () => {});
+test('Whenever an invalid events arrives, then its being rejected', async () => {
+  // Arrange
+  const invalidEvent = testHelpers.getSensorEvent({
+    category: `category-${testHelpers.getShortUnique()}`,
+    temperature: undefined,
+  });
+  const messageQueueClient = await testHelpers.startMQSubscriber(
+      'fake',
+      'events.new',
+  );
+
+  // Act
+  await messageQueueClient.publish('sensor.events', 'events.new', invalidEvent);
+
+  // Assert
+  await messageQueueClient.waitFor('nack', 1);
+  const potentiallyExistingEvent = await request(expressApp).get(
+      `/sensor-events/${invalidEvent.category}/category`,
+  );
+  expect(potentiallyExistingEvent).toMatchObject({ body: [] });
+});
 
 // ✅ TASK: Test the same scenario like above 👆 (invalid message), only this time ensure that the event was not saved to DB
 
@@ -67,10 +91,16 @@ test('Whenever an invalid events arrives, then its being rejected', async () => 
 
 test('When a new event is posted via API, then a message is put in the analytics queue', async () => {
   // Arrange
-  // 💡 TIP: Use your favorite mocking lib to listen to the function MessageQueueClient.publish
-  // This is a good way to ensure that the code indeed tried to publish the right thing
+  const eventToAdd = testHelpers.getSensorEvent();
+  const spyOnSendMessage = sinon.spy(MessageQueueClient.prototype, 'publish');
+
   // Act
-  // 💡 TIP: Add a valid event using the API. See other missions to learn about how to interact with the API
+  await request(expressApp).post('/sensor-events').send(eventToAdd);
+
   // Assert
-  // 💡 TIP: Ensure that not only the 'publish' function was called but also with the right params
+  expect(spyOnSendMessage.lastCall.args).toMatchObject([
+    'analytics.events',
+    'analytics.new',
+    eventToAdd,
+  ]);
 });
