@@ -142,23 +142,29 @@ describe('Sensors test', () => {
   test('When an internal NON-TRUSTED error occurs during request, Then the process exits', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
+    sinon
+        .stub(SensorsRepository.prototype, 'addSensorsEvent')
+        .rejects(new AppError('db-is-unaccessible', false, 500));
     // 💡 TIP: Trigger an error here like the tests above, tag the error as non-trusted
     /*
     Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
     */
 
     // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
+
     if (process.exit.restore) {
       process.exit.restore();
-    }
+    };
+
     const listenToProcessExit = sinon.stub(process, 'exit');
-    */
+
 
     // Act
+      await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check here whether process.exit was called
+      expect(listenToProcessExit.called).toBe(true);
   });
 
   // ✅🚀 TASK: Check that when uncaught error is thrown, the logger writes the mandatory fields and the process exits
@@ -170,14 +176,20 @@ describe('Sensors test', () => {
       process.exit.restore();
     }
     const listenToProcessExit = sinon.stub(process, 'exit');
+    const spyOnLogger = sinon.spy(console, 'error');
 
     // Act
     // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit('uncaughtException', new AppError('newAppError', false, 500, 'new app error'));
+
 
     // Assert
+    expect(listenToProcessExit.called).toBe(true);
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject({
+      name: 'newAppError',
+      stack: expect.any(String),
+      message: expect.any(String),
+    });
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
@@ -206,7 +218,9 @@ describe('Sensors test', () => {
         // 💡 TIP: This is a typical test, only the thrown error is provided here using the param: errorInstance
         //Arrange
         const eventToAdd = getSensorEvent();
-
+        sinon
+            .stub(SensorsRepository.prototype, 'addSensorsEvent')
+            .rejects(errorInstance);
         // 💡 TIP: make here some code throw the 'errorInstance' variable
 
         // 💡 TIP: We should listen here to the logger and metrics exporter - This is how we know that errors were handled
@@ -215,9 +229,12 @@ describe('Sensors test', () => {
 
         //Act
         // 💡 TIP: Approach the API like in any other test
+        await request(expressApp).post('/sensor-events').send(eventToAdd);
 
         //Assert
         // 💡 TIP: Check that the consoleErrorDouble, metricsExporterDouble were indeed called
+        expect(metricsExporterDouble.called).toBe(true);
+        expect(consoleErrorDouble.called).toBe(true);
       },
     );
   });
