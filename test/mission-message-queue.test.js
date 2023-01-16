@@ -91,5 +91,6 @@ test('When a new event is posted via API, then a message is put in the analytics
   const eventToAdd = testHelpers.getSensorEvent();
   const spyOnSendMessage = sinon.spy(MessageQueueClient.prototype, 'publish');
   await request(expressApp).post('/sensor-events').send(eventToAdd);
-  expect(spyOnSendMessage.lastCall.args).toMatchObject(['analytics.events', 'analytics.new', eventToAdd,]);
+  expect(spyOnSendMessage.lastCall.args).toMatchObject(['analytics.events', 'analytics.new', eventToAdd]);
+
 });
