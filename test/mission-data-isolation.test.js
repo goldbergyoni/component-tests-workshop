@@ -34,20 +34,23 @@ describe('Sensors test', () => {
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = {
-      category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `Thermostat-failed-unique:${Date.now()}`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
+      category: 'test-category',
     };
 
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
-
+    const receivedResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
     // Assert
+    expect(receivedResponse.status).toBe(200);
+    expect(receivedResponse.body.id).toBeDefined();
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(Object.entries(receivedResponse.body).length).toBeGreaterThan(0);
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
@@ -62,16 +65,53 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
+  test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      reason: `Thermostat-failed-unique:${Date.now()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'test-category',
+    };
+    // ACT
+    const firstResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const secondResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    // Assert
+    // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(firstResponse.status).toBe(200);
+    expect(firstResponse.body.id).toBeDefined();
+    expect(Object.entries(firstResponse.body).length).toBeGreaterThan(0);
+    expect(secondResponse.status).toBe(409);
+    expect(secondResponse.body.id).not.toBeDefined();
+    expect(Object.entries(secondResponse.body).length).toBe(0);
+  });
+
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
+  test('When querying for event by id, Then the right event is being returned', async () => {
     // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
     //  the ID of the added event globally). In this test, query for that ID
     // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      reason: `Thermostat-failed-unique:${Date.now()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'test-category',
+    };
+    // ACT
+    const firstResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const localResponse = await request(expressApp).get(`/sensor-events/${firstResponse.body.id}`,);
+
+    expect(localResponse.status).toBe(200);
+    expect(Object.entries(localResponse.body).length).toBeGreaterThan(0);
   });
 
   // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
@@ -89,6 +129,24 @@ describe('Sensors test', () => {
   // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
   // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
   // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
+  test(`when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!`, async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: undefined,
+      reason: `Thermostat-failed-unique:${Date.now()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'test-category',
+    };
+
+    // Act
+    const response = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(response.status).toBe(400);
+    expect(Object.entries(response.body).length).toBe(0);
+  });
 
   // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
 
