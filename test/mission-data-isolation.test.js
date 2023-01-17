@@ -36,17 +36,21 @@ describe('Sensors test', () => {
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `Thermostat-failed${getShortUnique()}`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
     };
 
     // Act
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    // const receivedResponse = await request(expressApp).get("/sensor-events/:id").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
+    expect(receivedResponse).toMatchObject({status: 200, body: eventToAdd});
+
     // 💡 TIP: Check not only the HTTP status bot also the body
   });
 
@@ -68,12 +72,33 @@ describe('Sensors test', () => {
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
-    // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
-    //  the ID of the added event globally). In this test, query for that ID
-    // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
-  });
+  test('When querying for event by id, Then the right event is being returned', async () => {
 
+    // Arrange
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed-${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+    const eventId = (
+      await request(expressApp).post('/sensor-events').send(eventToAdd)
+    ).body.id;
+
+    // Act
+    const receivedResponse = await request(expressApp).get(
+      `/sensor-events/${eventId}`,
+    );
+
+    // Assert
+    expect(receivedResponse).toMatchObject({
+      status: 200,
+      body: eventToAdd,
+    });
+  });
+ 
   // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
   // 💡 TIP: To run a single test only, put the word test.only in front of the test method
   // 💡 TIP: Other way to run a single test is to run the tests in watch mode - 'npm run test:dev',
@@ -95,14 +120,48 @@ describe('Sensors test', () => {
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
-  test('When adding multiple events, then all of them appear in the result', () => {});
+  test('When adding multiple events, then all of them appear in the result', async () => {
+
+    getSensorEvent
+    // Arrange
+    const event1 = getSensorEvent({});
+    const event2 = getSensorEvent({});
+    const eventId1 = (
+      await request(expressApp).post('/sensor-events').send(event1)
+    ).body.id;
+    const eventId2 = (
+      await request(expressApp).post('/sensor-events').send(event2)
+    ).body.id;
+
+    // Act
+    const receivedResponse = await request(expressApp).get('/sensor-events');
+
+    // Assert
+    expect(receivedResponse.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: eventId1 }),
+        expect.objectContaining({ id: eventId2 }),
+      ]),
+    );
+    });
 
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
   // ✅🚀  TASK: Test the following
-  test('When querying for a non-existing event, then get http status 404', () => {});
+  test('When querying for a non-existing event, then get http status 404', async () => {
+   // Arrange
+   const eventToAdd = getSensorEvent({ category: undefined });
+
+   // Act
+   const receivedResult = await request(expressApp)
+     .post('/sensor-events')
+     .send(eventToAdd);
+
+   // Assert
+   expect(receivedResult.status).toBe(400);
+  });
   // 💡 TIP: How could you be sure that an item does not exist? 🤔
 
   // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues

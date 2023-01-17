@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "sensors-api.js",
-  "scripts": {
+  "scripts": {   
     "start": "./src/index.js",
     "test": "jest --reporters=default --reporters=jest-junit",
     "test:dev": "jest --watch --silent --runInBand",
