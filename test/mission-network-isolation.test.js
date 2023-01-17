@@ -141,19 +141,17 @@ test('When emitting event and the notification service fails once, then a notifi
     temperature: 80, //💡 TIP: We need high temperature to trigger notification
     notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
   });
-  nock('http://localhost').get(`/sensor-events/${eventToAdd.id}`).times(1).reply(500, {success: false});
+  nock('http://localhost')
+  .post(`/notification/${eventToAdd.notificationCategory}`)
+  .times(1)
+  .reply(500);
 
   // Act
-  const receivedResponse = await request(expressApp).get(
-    `/sensor-events/${eventToAdd.id}`,
-  );
-  const receivedResponse2 = await request(expressApp).get(
-    `/sensor-events/${eventToAdd.id}`,
-  );
+  const event = await request(expressApp).post('/sensor-events').send(eventToAdd);
+  const receivedResponse = await request(expressApp).get(`/sensor-events/${event.body.id}`);
 
   // Assert
-  expect(receivedResponse.status).toBe(500);
-  expect(receivedResponse2.status).toBe(500);
+  expect(receivedResponse.status).toBe(200);
 
   // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
 });
