@@ -31,14 +31,18 @@ describe('Sensors test', () => {
     // Arrange
     const eventToAdd = getSensorEvent({ temperature: 60 });
 
-    // 💡 TIP: Uncomment me to make this test fail and realize why
-    // // Act
-    // const receivedResponse = await request(expressApp)
-    //   .post('/sensor-events')
-    //   .send(eventToAdd);
+    // 💡 TIP: Uncomment me to realize why this test fails
+    // Act
+
+    nock('http://localhost')
+      .post('/notification/default')
+      .reply(200, { success: true });
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
-    // expect(receivedResponse.status).toBe(200);
+    expect(receivedResponse.status).toBe(200);
   });
 
   // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
@@ -50,35 +54,42 @@ describe('Sensors test', () => {
   // 💡 TIP: Sometimes tests do modify some network/services reply, further tests might fail because of these changes
   // 💡 TIP: nock.cleanAll() function cleans up all the existing interceptions
 
+  nock.cleanAll();
+
   // ✅ TASK: Write the following test below
   test('When temperature is above 50, then the right notification should be sent', async () => {
-    // Arrange
     const eventToAdd = getSensorEvent({
       temperature: 51,
       notificationCategory: getShortUnique(),
     });
-    let notificationPayload;
 
+    let notificationPayload;
+    nock('http://localhost')
+      .post(
+        `/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+      )
+      .reply(200, {
+        success: true,
+      });
     // 💡 TIP: You need to define here a new nock, so you can listen to it and ensure that the call did happen
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
-    // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
+    // Note that the notification URL contains the notificationCategory, so you can generate unique notificationCategory
     // and the URL will have an address that is unique to this test
-    /*
-    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
-        (payload) => (notificationPayload = payload),
-      ).reply(200, {success: true,});
-      */
 
     // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
-    // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
-    // You may call whether this URL was called using - scope.isDone()
+    expect(notificationPayload).toMatchObject({
+      id: expect.any(Number),
+      title: expect.any(String),
+    });
   });
 
   // ✅ TASK: In the test above that checks for notification, ensure that the request body was valid. Otherwise, our code
   //  might fail to issue the right request (e.g. factor invalid body) and the test will not discover this
-  // 💡 TIP: nock allows getting the request body using its constructor: nock(url).post(url, (body)=>{your function save the body in a test variable})
+  // 💡 TIP: nock allows gettings the request body using its constructor: nock(url).post(url, (body)=>{your function save the body in a test variable})
   // After doing this, the variable notificationPayload will hold the body. On the Assert phase, ensure that it contains the right schema or data
 
   // ✅ TASK: Write the following test below
