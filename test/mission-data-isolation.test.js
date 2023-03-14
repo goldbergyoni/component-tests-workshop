@@ -36,7 +36,7 @@ describe('Sensors test', () => {
     const eventToAdd = {
       category: 'Home equipment',
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `Thermostat-failed - ${getShortUnique()}`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
@@ -45,9 +45,18 @@ describe('Sensors test', () => {
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(receivedResponse).toMatchObject({
+      status: 200,
+      body: eventToAdd,
+    });
+
+    expect(receivedResponse.body.id).toEqual(expect.any(Number));
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
@@ -68,11 +77,6 @@ describe('Sensors test', () => {
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
-    // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
-    //  the ID of the added event globally). In this test, query for that ID
-    // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
-  });
 
   // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
   // 💡 TIP: To run a single test only, put the word test.only in front of the test method
@@ -109,6 +113,63 @@ describe('Sensors test', () => {
   // Check that when adding two events at the same time, both are saved successfully
   // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
   // 💡 TIP: Promise.all function might be helpful to parallelize the requests
+
+  test('When querying for multiple queries, Then the all of them need to being returned', async () => {
+    // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
+    //  the ID of the added event globally). In this test, query for that ID
+    // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+
+    // Arrange
+    const eventToAdd1 = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed - ${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    const eventToAdd2 = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed - ${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    // Act
+    // 💡 TIP: use any http client lib like Axios OR supertest
+    // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResponsePost1 = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd1);
+
+    const receivedResponsePost2 = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd2);
+
+    const id1 = receivedResponsePost1.body.id;
+    const id2 = receivedResponsePost2.body.id;
+
+    const receivedResponseGet1 = await request(expressApp).get(
+      `/sensor-events/${id1}`,
+    );
+    const receivedResponseGet2 = await request(expressApp).get(
+      `/sensor-events/${id2}`,
+    );
+    // Assert
+    // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(receivedResponseGet1).toMatchObject({
+      status: 200,
+      body: eventToAdd1,
+    });
+
+    expect(receivedResponseGet2).toMatchObject({
+      status: 200,
+      body: eventToAdd2,
+    });
+  });
 
   // ✅🚀 When adding a valid event, we get back some fields with dynamic values: createdAt, updatedAt, id
   //  Check that these fields are not null and have the right schema
