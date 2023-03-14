@@ -176,7 +176,7 @@ describe('Sensors test', () => {
       .send();
 
     // Assert
-    expect(getResponse.body.length).toBe(2);
+    expect(getResponse.body.length).toBe(1);
   });
 
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
