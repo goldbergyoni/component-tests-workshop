@@ -34,9 +34,9 @@ describe('Sensors test', () => {
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = {
-      category: 'Home equipment',
+      category: `Home equipment`,
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: `Thermostat-failed  ${getShortUnique()}`, // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
@@ -45,9 +45,19 @@ describe('Sensors test', () => {
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(receivedResponse).toMatchObject({
+      status: 200,
+      body: {
+        ...eventToAdd,
+        id: expect.any(Number),
+      },
+    });
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
@@ -68,10 +78,37 @@ describe('Sensors test', () => {
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
+  test('When querying for event by id, Then the right event is being returned', async () => {
     // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
     //  the ID of the added event globally). In this test, query for that ID
     // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+    // Arrange
+    const eventToAdd = {
+      category: `Home equipment`,
+      temperature: 20,
+      reason: `Thermostat-failed  ${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Act
+    const getResponse = await request(expressApp)
+      .get(`/sensor-events/${receivedResponse.body.id}`)
+      .send();
+
+    // Assert
+    expect(getResponse).toMatchObject({
+      status: 200,
+      body: {
+        ...eventToAdd,
+        id: receivedResponse.body.id,
+      },
+    });
   });
 
   // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
@@ -91,11 +128,56 @@ describe('Sensors test', () => {
   // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
 
   // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
+  test('when an event is deleted, then its indeed not existing anymore', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: `Home equipment`,
+      temperature: 20,
+      reason: `Thermostat-failed  ${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Act
+    const deleteResponse = await request(expressApp)
+      .delete(`/sensor-events/${receivedResponse.body.id}`)
+      .send(eventToAdd);
+
+    // Assert
+    expect(deleteResponse).toMatchObject({
+      status: 200,
+    });
+  });
 
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
-  test('When adding multiple events, then all of them appear in the result', () => {});
+  test('When adding multiple events, then all of them appear in the result', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: `Home equipment ${getShortUnique()}`,
+      temperature: 20,
+      reason: `Thermostat-failed  ${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Act
+    const getResponse = await request(expressApp)
+      .get(`/sensor-events/${eventToAdd.category}/reason`)
+      .send();
+
+    // Assert
+    expect(getResponse.body.length).toBe(2);
+  });
 
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
