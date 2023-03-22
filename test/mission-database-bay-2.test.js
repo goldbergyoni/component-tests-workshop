@@ -37,7 +37,8 @@ describe('Sensors test 2', () => {
     // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
 
     test('When a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!', async () => {
-        const eventToAdd = getSensorEvent({temperature: undefined});
+        const eventToAdd = getSensorEvent();
+        eventToAdd.temperature = undefined;
 
         const getAllResult = await request(expressApp)
             .get('/sensor-events')
