@@ -5,6 +5,7 @@
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
 const request = require('supertest');
+const sensorDal = require('../src/data-access/sensors-repository');
 const nock = require('nock');
 const sinon = require('sinon');
 
@@ -54,11 +55,13 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent({ category: undefined });
 
     // Act
-    const receivedResult = await request(expressApp)
+    const response = await request(expressApp)
       .post('/sensor-events')
       .send(eventToAdd);
 
     // Assert
+
+    expect(response.status).toEqual(400)
   });
 
   // ✅ TASK: Code the following test below
@@ -74,24 +77,31 @@ describe('Sensors test', () => {
     */
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+    sinon.stub(sensorDal.prototype, 'addSensorsEvent').rejects(new Error("Error explanation"));
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    expect(response.status).toEqual(500);
   });
 
   // ✅ TASK: Code the following test below
   // 💡 TIP: Typically we try to avoid mocking our own code. However, this is necessary for testing error handling
   // and a good case to make an exception for
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
+    const eventToAdd = getSensorEvent();
     // Arrange
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
 
     const spyOnLogger = sinon.spy(console, 'error');
+    sinon.stub(sensorDal.prototype, 'addSensorsEvent').rejects(new Error("Error explanation"));
+
 
     // Act
-
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
     // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
+    expect(spyOnLogger.args).toEqual(expect.arrayContaining([[expect.objectContaining({message: "Error explanation"})]]))
   });
 
   // ✅ TASK: Code the following test below
@@ -101,9 +111,16 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
-
+    const metricsExporterDouble = sinon.stub(metricsExporter, 'fireMetric');
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
+    sinon.stub(sensorDal.prototype, 'addSensorsEvent').rejects(new Error("Error explanation"));
+
+
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+
+    expect(metricsExporterDouble.called).toEqual(true);
   });
 
   // ✅🚀 TASK: Code the following test below
