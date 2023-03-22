@@ -16,6 +16,8 @@ const {
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
 const { AppError, metricsExporter } = require('../src/error-handling');
+const SensorsService = require("../src/domain/sensors-service");
+const SensorsDal = require("../src/data-access/sensors-repository");
 let expressApp;
 
 beforeAll(async () => {
@@ -59,19 +61,31 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400);
+
   });
 
   // ✅ TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
     // Arrange
-    const eventToAdd = getSensorEvent();
     // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
     // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
     /*
     sinon
       .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
+      .rejects(new AppError('db-is-unaccessible', true, 500));
     */
+
+    sinon
+        .stub(SensorsDal.prototype, 'addSensorsEvent')
+        .rejects(new AppError('db-is-unaccessible', true, 500));
+
+    const eventToAdd = getSensorEvent({ category: "blabla" });
+
+    // Act
+    const res = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    expect(res.status).toBe(500);
+
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
   });
@@ -84,13 +98,27 @@ describe('Sensors test', () => {
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
 
     const spyOnLogger = sinon.spy(console, 'error');
+    sinon
+        .stub(SensorsDal.prototype, 'addSensorsEvent')
+        .rejects(new AppError('db-is-unaccessible', true, 500));
 
+    const eventToAdd = getSensorEvent({ category: "blabla" });
+
+    // Act
+    const res = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // Act
 
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
+    expect(spyOnLogger.calledOnce).toBe(true);
+
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject(   {
+      "name": "db-is-unaccessible",
+      "isTrusted": true,
+      "status": 500,
+    });
     // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
   });
 
@@ -100,8 +128,28 @@ describe('Sensors test', () => {
   // indeed fired is critical
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
-    const eventToAdd = getSensorEvent();
+    const metricsExporterDouble = sinon.stub(metricsExporter, 'fireMetric');
 
+    sinon
+        .stub(SensorsDal.prototype, 'addSensorsEvent')
+        .rejects(new AppError('db-is-unaccessible', true, 500));
+
+    const eventToAdd = getSensorEvent({ category: "blabla" });
+
+    // Act
+    const res = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    // Act
+
+    // Assert
+    // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
+    // https://sinonjs.org/releases/latest/spies/
+    // 💡 TIP: Check not only that the logger was called but also with the right properties
+    expect(metricsExporterDouble.calledOnce).toBe(true);
+
+    expect(metricsExporterDouble.lastCall.args).toMatchObject(   [
+      'error',
+      expect.any(Object)
+    ]);
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
   });
