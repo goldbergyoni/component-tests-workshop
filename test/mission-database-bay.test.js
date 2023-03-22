@@ -96,14 +96,37 @@ describe('Sensors test', () => {
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
-  test('When adding multiple events, then all of them appear in the result', () => {});
+  test('When adding multiple events, then all of them appear in the result', async () => {
+    let res = await request(expressApp).get("/sensor-events");
+    const originalEventCount = res.body.length;
+
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Test',
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    };
+
+    // Act
+    await Promise.all([request(expressApp).post("/sensor-events").send(eventToAdd), request(expressApp).post("/sensor-events").send(eventToAdd)]);
+
+    res = await request(expressApp).get("/sensor-events");
+
+    expect(res.body.length).toBe(originalEventCount + 2);
+  });
 
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
   // ✅🚀  TASK: Test the following
-  test('When querying for a non-existing event, then get http status 404', () => {});
+  test('When querying for a non-existing event, then get http status 404', async () => {
+    receivedResponse = await request(expressApp).get(`/sensor-events/${-1}`);
+
+    expect(receivedResponse.status).toBe(404);
+  });
   // 💡 TIP: How could you be sure that an item does not exist? 🤔
 
   // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
@@ -130,5 +153,31 @@ describe('Sensors test', () => {
 
   // ✅🚀  TASK: Test when a sensor event is deleted, the code is not mistakenly deleting data that was not
   // supposed to be deleted
+  test('When a sensor event is deleted, the code is not mistakenly deleting data that was not', async () => {
+    let res = await request(expressApp).get("/sensor-events");
+    const originalEventCount = res.body.length;
+
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Rooms',
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    };
+
+    let receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    res = await request(expressApp).get("/sensor-events");
+
+    expect(res.body.length).toBe(originalEventCount + 1);
+
+    receivedResponse = await request(expressApp).delete(`/sensor-events/${receivedResponse.body.id}`);
+
+    res = await request(expressApp).get(`/sensor-events`);
+
+    expect(res.body.length).toBe(originalEventCount);
+
+  });
   // 💡 TIP: You may need to add more than one event to achieve this
 });
