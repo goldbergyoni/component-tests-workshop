@@ -4,7 +4,9 @@
 // ✅🚀 This symbol represents an advanced task
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
+const sensorDal = require('../src/data-access/sensors-repository');
 const request = require('supertest');
+const axios = require('axios')
 const nock = require('nock');
 const {
   startWebServer,
@@ -33,6 +35,17 @@ afterEach(() => {
   sinon.restore();
 });
 
+function generateEventToAdd(overrides) {
+  const eventToAdd = {
+    temperature: 20,
+    color: 'Green',
+    weight: 80,
+    status: 'active',
+    category: 'Kids-Room',
+  };
+  return Object.assign(eventToAdd, overrides);
+}
+
 describe('Sensors test', () => {
   // ✅ TASK: Run the testing and ensure the the next simplistic test pass
   test('Just checking that testing works on your machine', () => {
@@ -46,22 +59,17 @@ describe('Sensors test', () => {
   // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
-    const eventToAdd = {
-      temperature: 20,
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-      category: 'Kids-Room',
-      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
-    };
+    const eventToAdd = generateEventToAdd({
+      category: undefined
+    });
 
     // Act
-
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-
+    expect(response.status).toEqual(400)
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
   });
@@ -70,10 +78,30 @@ describe('Sensors test', () => {
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
+    const category = "bla"
+    const eventToAdd = generateEventToAdd({
+      category
+    });
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const postResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const generatedId = postResponse.body.id;
+    const getResponse = await request(expressApp).get(`/sensor-events/${generatedId}`)
     // Assert
+    expect(postResponse).toMatchObject({
+      status: 200,
+      body: {
+        ...eventToAdd
+      }
+    })
+    expect(getResponse).toMatchObject({
+      status: 200,
+      body: {
+        ...eventToAdd,
+        id: generatedId
+      }
+    })
     // 💡 TIP: You may check the body and the status all together with the following syntax:
     // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
   });
@@ -93,8 +121,19 @@ describe('Sensors test', () => {
     // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
     //  https://sinonjs.org/releases/latest/stubs/
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    };
+    sinon.stub(sensorDal.prototype, 'addSensorsEvent').rejects(new Error("Error explanation"));
     // Act
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // Assert
+    expect(response.status).toEqual(500);
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed

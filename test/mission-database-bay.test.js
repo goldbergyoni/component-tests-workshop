@@ -11,6 +11,7 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
+const {post} = require("axios");
 
 let expressApp;
 
@@ -28,6 +29,16 @@ beforeEach(() => {
     success: true,
   });
 });
+function generateEventToAdd(overrides) {
+  const eventToAdd = {
+    temperature: 20,
+    color: 'Green',
+    weight: 80,
+    status: 'active',
+    category: 'Kids-Room',
+  };
+  return Object.assign(eventToAdd, overrides);
+}
 
 describe('Sensors test', () => {
   // ✅ TASK: Write the following test 👇 to ensure adding an event succeed
@@ -96,14 +107,38 @@ describe('Sensors test', () => {
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
-  test('When adding multiple events, then all of them appear in the result', () => {});
+  test('When adding multiple events, then all of them appear in the result', async () => {
+    const category = Math.random()
+    const eventToAdd = generateEventToAdd({
+      category
+    });
+    // Act
+    // 💡 TIP: use any http client lib like Axios OR supertest
+    // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const [postResponse, secondPostResponse] = await Promise.all([request(expressApp).post("/sensor-events").send(eventToAdd), request(expressApp).post("/sensor-events").send(eventToAdd)])
+    const getResponse = await request(expressApp).get(`/sensor-events/${category}/color`)
+    const generatedIds = getResponse.body.map(event => event.id)
+    expect(generatedIds).toEqual(expect.arrayContaining([postResponse.body.id, secondPostResponse.body.id]))
+    const bla = 1;
+  });
 
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
   // ✅🚀  TASK: Test the following
-  test('When querying for a non-existing event, then get http status 404', () => {});
+  test('When querying for a non-existing event, then get http status 404', async () => {
+    const eventToAdd = generateEventToAdd();
+    const [postResponse, postResponseToStay] = await Promise.all([request(expressApp).post("/sensor-events").send(eventToAdd), request(expressApp).post("/sensor-events").send(eventToAdd)])
+    const deletedId = postResponse.body.id;
+    const exsitingId = postResponseToStay.body.id;
+    const deleteResponse = await request(expressApp).delete(`/sensor-events/${deletedId}`);
+    expect(deleteResponse.status).toEqual(200);
+    const getResponse = await request(expressApp).get(`/sensor-events/${deletedId}`)
+    expect(getResponse.status).toEqual(404)
+    const existinGetResponse = await request(expressApp).get(`/sensor-events/${exsitingId}`)
+    expect(existinGetResponse.status).toEqual(200)
+  });
   // 💡 TIP: How could you be sure that an item does not exist? 🤔
 
   // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
