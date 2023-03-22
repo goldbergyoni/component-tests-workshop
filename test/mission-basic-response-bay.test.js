@@ -11,6 +11,7 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
+const SensorsEventService = require('../src/domain/sensors-service');
 const sinon = require('sinon');
 
 let expressApp;
@@ -46,22 +47,17 @@ describe('Sensors test', () => {
   // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
-    const eventToAdd = {
-      temperature: 20,
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-      category: 'Kids-Room',
-      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
-    };
+    const eventToAdd = getSensorEvent({ category: null });
 
     // Act
-
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-
+    expect(response.status).toEqual(400);
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
   });
@@ -70,10 +66,21 @@ describe('Sensors test', () => {
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
+    const eventToAdd = getSensorEvent();
     // Act
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
     // Assert
+    expect(response.status).toEqual(200);
+
+    expect(response.body).toMatchObject({
+      ...eventToAdd,
+      id: expect.any(Number),
+    });
+
     // 💡 TIP: You may check the body and the status all together with the following syntax:
     // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
   });
@@ -82,6 +89,38 @@ describe('Sensors test', () => {
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
 
+  test("When a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB", async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent();
+
+    // Act on post
+    const createResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert on post
+    expect(createResponse.status).toEqual(200);
+
+    expect(createResponse.body).toMatchObject({
+      ...eventToAdd,
+      id: expect.any(Number),
+    });
+
+    const createdSensorEventId = createResponse.body.id;
+
+    // Act on get
+    const getResponse = await request(expressApp).get(
+      `/sensor-events/${createdSensorEventId}`,
+    );
+
+    // Assert on get
+    expect(createResponse.status).toEqual(200);
+
+    expect(getResponse.body).toMatchObject({
+      ...eventToAdd,
+      id: createdSensorEventId,
+    });
+  });
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
 
@@ -93,8 +132,20 @@ describe('Sensors test', () => {
     // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
     //  https://sinonjs.org/releases/latest/stubs/
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
+    const eventToAdd = getSensorEvent();
+
+    const stub = sinon
+      .stub(SensorsEventService.prototype, 'addEvent')
+      .throws(new Error());
+
     // Act
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
     // Assert
+    expect(stub.calledOnce).toBeTrue
+    expect(response.status).toEqual(500);
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
