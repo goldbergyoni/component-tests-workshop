@@ -126,52 +126,51 @@ describe('Sensors test', () => {
     // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
     // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
   });
-});
 
-// ✅🚀 There is some naughty code that is issuing HTTP requests without our awareness! Find it and nock it!
-// 💡 TIP: When approaching real HTTP requests during testing, this might incur costs, performance issues and mostly flakiness
-// 💡 TIP: Nock allows you to prevent this using the command nock.enableNetConnect(). Just make sure to allow 127.0.0.1 calls since this is the internal API
+  // ✅🚀 There is some naughty code that is issuing HTTP requests without our awareness! Find it and nock it!
+  // 💡 TIP: When approaching real HTTP requests during testing, this might incur costs, performance issues and mostly flakiness
+  // 💡 TIP: Nock allows you to prevent this using the command nock.enableNetConnect(). Just make sure to allow 127.0.0.1 calls since this is the internal API
 
-// ✅🚀 When this tets suite (file) is done, ensure to clean-up and enable network requests - Maybe other test files do wish to approach external resources
-// 💡 TIP: Nock intercepts any calls within the same process. Anything that is not reset here will affect the next tests
+  // ✅🚀 When this tets suite (file) is done, ensure to clean-up and enable network requests - Maybe other test files do wish to approach external resources
+  // 💡 TIP: Nock intercepts any calls within the same process. Anything that is not reset here will affect the next tests
 
-// ✅🚀  TASK: Write the same test like above 👆, but this time when the response arrives with some delay
-// 💡 TIP: Some code contains races between multiple tasks (e.g. Promise.race), for example when waiting for the request for sometime
-// and after sometime invoking alternative code. If the request will always bounce back too quick - The alternative path will never be tested
-// 💡 TIP: Nock is capable of simulating delays: nock(url).post(path).delay(timeInMillisecond)
+  // ✅🚀  TASK: Write the same test like above 👆, but this time when the response arrives with some delay
+  // 💡 TIP: Some code contains races between multiple tasks (e.g. Promise.race), for example when waiting for the request for sometime
+  // and after sometime invoking alternative code. If the request will always bounce back too quick - The alternative path will never be tested
+  // 💡 TIP: Nock is capable of simulating delays: nock(url).post(path).delay(timeInMillisecond)
 
-// ✅🚀 TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
-// the remote service does not reply at all, we are still able to progress and save the event
-// 💡 TIP: Nock is capable of simulating timeouts without waiting for the actual timeout
-// Here's nock syntax: nock(url).post(path).delay(timeInMillisecond). Choose delay value that is just a bit bigger than Axios default
+  // ✅🚀 TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
+  // the remote service does not reply at all, we are still able to progress and save the event
+  // 💡 TIP: Nock is capable of simulating timeouts without waiting for the actual timeout
+  // Here's nock syntax: nock(url).post(path).delay(timeInMillisecond). Choose delay value that is just a bit bigger than Axios default
 
-// ✅🚀 TASK: Write the following test below
-// 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
-test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
-  const eventToAdd = getSensorEvent({
-    temperature: 50,
-    notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+  // ✅🚀 TASK: Write the following test below
+  // 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
+  test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
+    const eventToAdd = getSensorEvent({
+      temperature: 50,
+      notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+    });
+
+    nock('http://localhost')
+      .post(`/notification/${eventToAdd.notificationCategory}`)
+      .times(1)
+      .reply(500);
+
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    expect(receivedResponse.status).toBe(200);
+    expect(receivedResponse.body).toMatchObject({
+      ...eventToAdd,
+      id: expect.any(Number),
+    });
+    // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
+    // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
+    // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
   });
-  
-  nock('http://localhost')
-    .post(`/notification/${eventToAdd.notificationCategory}`)
-    .times(1)
-    .reply(500);
-
-  const receivedResponse = await request(expressApp)
-    .post('/sensor-events')
-    .send(eventToAdd);
-
-  expect(receivedResponse.status).toBe(200);
-  expect(receivedResponse.body).toMatchObject({
-    ...eventToAdd,
-    id: expect.any(Number),
-  });
-  // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
-  // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
-  // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
 });
-
 // ✅🚀 TASK: Ensure that if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue
 // 💡 TIP: In the root of the code, you may find the file openapi.json that documents the APIs
 // 💡 TIP: Use jest-open-api tool to help with this mission:
