@@ -15,6 +15,7 @@ const {
 
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
+const SensorsEventService = require('../src/domain/sensors-service');
 const { AppError, metricsExporter } = require('../src/error-handling');
 let expressApp;
 
@@ -59,6 +60,7 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400);
   });
 
   // ✅ TASK: Code the following test below
@@ -70,10 +72,20 @@ describe('Sensors test', () => {
     /*
     sinon
       .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
+      .rejects(new AppError('db-is-unaccessible', true, 500));
     */
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+
+    sinon
+      .stub(SensorsEventService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
+
+    // Act
+    const response = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(response.status).toBe(500);
   });
 
   // ✅ TASK: Code the following test below
@@ -84,10 +96,18 @@ describe('Sensors test', () => {
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
 
     const spyOnLogger = sinon.spy(console, 'error');
+    const errorToThrow = new AppError('Test internal error logging', true, 500);
+
+    sinon
+      .stub(SensorsEventService.prototype, 'addEvent')
+      .rejects(errorToThrow);
 
     // Act
+    await request(expressApp).post('/sensor-events').send(getSensorEvent());
 
     // Assert
+    expect(spyOnLogger.lastCall.calledWithExactly(errorToThrow)).toBeTruthy();
+
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
@@ -100,8 +120,18 @@ describe('Sensors test', () => {
   // indeed fired is critical
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
-    const eventToAdd = getSensorEvent();
+    const spyOnMetrics = sinon.spy(metricsExporter, 'fireMetric');
+    const errorToThrow = new AppError('Test metrics exporter logging', true, 500);
 
+    sinon
+      .stub(SensorsEventService.prototype, 'addEvent')
+      .rejects(errorToThrow);
+
+    // Act
+    await request(expressApp).post('/sensor-events').send(getSensorEvent());
+
+    // Assert
+    expect(spyOnMetrics.lastCall.calledWithExactly('error', { errorName: errorToThrow.name })).toBeTruthy();
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
   });
@@ -117,19 +147,22 @@ describe('Sensors test', () => {
     /*
     Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
     */
+    sinon
+      .stub(SensorsEventService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', false, 500));
 
     // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
     if (process.exit.restore) {
       process.exit.restore();
     }
     const listenToProcessExit = sinon.stub(process, 'exit');
-    */
 
     // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check here whether process.exit was called
+    expect(listenToProcessExit.calledOnce).toBeTruthy();
   });
 
   // ✅🚀 TASK: Check that when uncaught error is thrown, the logger writes the mandatory fields and the process exits
@@ -137,6 +170,9 @@ describe('Sensors test', () => {
   // non-documented crash!
   test('When uncaught exception is thrown, then logger writes the mandatory fields and the process exits', async () => {
     // Arrange
+    const errorToThrow = new Error('Out of memory');
+    const spyOnLogger = sinon.spy(console, 'error');
+
     if (process.exit.restore) {
       process.exit.restore();
     }
@@ -144,16 +180,34 @@ describe('Sensors test', () => {
 
     // Act
     // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit('uncaughtException', errorToThrow);
 
     // Assert
+    expect(spyOnLogger.lastCall.calledWithExactly(errorToThrow)).toBeTruthy();
+    expect(listenToProcessExit.called).toBeTruthy();
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
   // 💡 TIP: The event process.on('unhandledRejection' , yourCallBack) fires when a rejected promise is not caught error is not caught and will lead to
   // non-documented crash!
+  test('When unhandled rejections is thrown, then logger writes the mandatory fields and the process exits', async () => {
+    // Arrange
+    const errorToThrow = new Error('Pod is not accessible');
+    const spyOnLogger = sinon.spy(console, 'error');
+
+    if (process.exit.restore) {
+      process.exit.restore();
+    }
+    const listenToProcessExit = sinon.stub(process, 'exit');
+
+    // Act
+    // 💡 TIP: Explicitly make the process object throw an uncaught exception:
+    process.emit('unhandledRejection', errorToThrow);
+
+    // Assert
+    expect(spyOnLogger.lastCall.calledWithExactly(errorToThrow)).toBeTruthy();
+    expect(listenToProcessExit.called).toBeTruthy();
+  });
 
   // ✅🚀 TASK: Check that for any type of error that is being thrown, whether a valid error object or number or anything else - Our
   //  error handler is capable of handling it
@@ -164,30 +218,36 @@ describe('Sensors test', () => {
   describe('Various Error Types', () => {
     // 💡 TIP: Here is a list of all sort of error that might get thrown - Let's see that we can process each item
     test.each`
-      errorInstance                       | errorTypeDescription
-      ${null}                             | ${'Null as error'}
-      ${'This is a string'}               | ${'String as error'}
-      ${1}                                | ${'Number as error'}
-      ${{}}                               | ${'Object as error'}
-      ${new Error('JS basic error')}      | ${'JS error'}
-      ${new AppError('error-name', true)} | ${'AppError'}
+      errorInstance                       | errorTypeDescription  | expectedErrorName
+      ${null}                             | ${'Null as error'}    | ${'Error'}
+      ${'This is a string'}               | ${'String as error'}  | ${'This is a string'}
+      ${1}                                | ${'Number as error'}  | ${'generic-error'}
+      ${{}}                               | ${'Object as error'}  | ${'generic-error'}
+      ${new Error('JS basic error')}      | ${'JS error'}         | ${'Error'}
+      ${new AppError('error-name', true)} | ${'AppError'}         | ${'error-name'}
     `(
       `When throwing $errorTypeDescription, Then it's handled correctly`,
-      async ({ errorInstance }) => {
+      async ({ errorInstance, expectedErrorName }) => {
         // 💡 TIP: This is a typical test, only the thrown error is provided here using the param: errorInstance
         //Arrange
         const eventToAdd = getSensorEvent();
 
         // 💡 TIP: make here some code throw the 'errorInstance' variable
-
         // 💡 TIP: We should listen here to the logger and metrics exporter - This is how we know that errors were handled
         const metricsExporterDouble = sinon.stub(metricsExporter, 'fireMetric');
         const consoleErrorDouble = sinon.stub(console, 'error');
 
+        sinon
+          .stub(SensorsEventService.prototype, 'addEvent')
+          .rejects(errorInstance);
+
         //Act
         // 💡 TIP: Approach the API like in any other test
+        await request(expressApp).post('/sensor-events').send(eventToAdd);
 
         //Assert
+        expect(metricsExporterDouble.lastCall.args[1].errorName).toBe(expectedErrorName);
+        expect(consoleErrorDouble.calledOnce).toBeTruthy();
         // 💡 TIP: Check that the consoleErrorDouble, metricsExporterDouble were indeed called
       },
     );
