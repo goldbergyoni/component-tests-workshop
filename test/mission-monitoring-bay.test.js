@@ -15,6 +15,7 @@ const {
 
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
+const SensorsEventService = require('../src/domain/sensors-service')
 const { AppError, metricsExporter } = require('../src/error-handling');
 let expressApp;
 
@@ -59,6 +60,8 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400);
+
   });
 
   // ✅ TASK: Code the following test below
@@ -67,14 +70,23 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent();
     // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
     // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
     sinon
-      .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
+      .stub(SensorsEventService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
+    const metricsExporterDouble = sinon.stub(metricsExporter, 'fireMetric');
+
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+    //ACT
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(metricsExporterDouble.calledOnce).toBe(true);
+    expect(metricsExporterDouble.getCall(0).args[0]).toBe('error');
+    metricsExporter.fireMetric.restore();
+    SensorsEventService.prototype.addEvent.restore();
   });
+
 
   // ✅ TASK: Code the following test below
   // 💡 TIP: Typically we try to avoid mocking our own code. However, this is necessary for testing error handling
@@ -84,14 +96,28 @@ describe('Sensors test', () => {
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
 
     const spyOnLogger = sinon.spy(console, 'error');
+    const eventToAdd = getSensorEvent();
+    sinon
+        .stub(SensorsEventService.prototype, 'addEvent')
+        .rejects(new AppError('db-is-unaccessible', true, 500));
 
     // Act
+    await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
 
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
     // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
+    expect(spyOnLogger.getCall(0).args[0]).toMatchObject(expect.objectContaining({
+      "isTrusted": true,
+      "name": "db-is-unaccessible",
+      "status": 500
+    }));
+    spyOnLogger.restore();
+
   });
 
   // ✅ TASK: Code the following test below
@@ -101,7 +127,18 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
-
+    const metricsExporterDouble = sinon.stub(metricsExporter, 'fireMetric');
+    sinon
+        .stub(SensorsEventService.prototype, 'addEvent')
+        .rejects(new AppError('db-is-unaccessible', true, 500));
+    // Act
+    await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
+    // Assert
+    expect(metricsExporterDouble.calledOnce).toBe(true);
+    expect(metricsExporterDouble.getCall(0).args[0]).toBe("error");
+    metricsExporterDouble.restore();
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
   });
