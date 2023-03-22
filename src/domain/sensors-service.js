@@ -23,12 +23,12 @@ class SensorsEventService {
       }
 
       try {
-        await axios.post(
-          `http://localhost/notification/${notificationCategory}`,
-          {
+        await axiosRetry(
+          axios.post(`http://localhost/notification/${notificationCategory}`, {
             title: 'Something critical happened',
             id,
-          },
+          }),
+          { retries: 1 },
         );
         eventToHandle.notificationSent = true;
       } catch (error) {
