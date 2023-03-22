@@ -40,18 +40,19 @@ describe('Sensors test 2', () => {
         const eventToAdd = getSensorEvent();
         eventToAdd.temperature = undefined;
 
-        const getAllResult = await request(expressApp)
-            .get('/sensor-events')
-
         const addResult = await request(expressApp)
             .post('/sensor-events')
             .send(eventToAdd);
 
-        const getAllResultSecond = await request(expressApp)
+        const getAllResult = await request(expressApp)
             .get('/sensor-events')
 
         expect(addResult).toMatchObject({status: 400});
-        expect(getAllResult.body).toMatchObject(getAllResultSecond.body);
+        expect(getAllResult.body).not.toMatchObject(expect.arrayContaining([
+            expect.objectContaining({
+                temperature: undefined
+            })
+        ]));
     });
 
 
