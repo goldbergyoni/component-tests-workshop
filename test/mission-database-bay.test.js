@@ -34,21 +34,36 @@ describe('Sensors test', () => {
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
+    let category = `Unique category ${shortUniqueValue()}`
+    let reason = `Unique reason ${shortUniqueValue()}`
     const eventToAdd = {
-      category: 'Home equipment',
+      category: category,
       temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
+      reason: reason, // This must be unique
       color: 'Green',
       weight: 80,
-      status: 'active',
+      status: 'active'
     };
 
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    let receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(receivedResponse).toMatchObject({
+      status: 200,
+      body: {
+        id: expect.any(Number),
+        category: category,
+        temperature: 20,
+        reason: reason, // This must be unique
+        color: 'Green',
+        weight: 80,
+        status: 'active'
+      }
+    });
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
@@ -63,7 +78,10 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
+  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+  //
+  // });
+
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
@@ -132,3 +150,8 @@ describe('Sensors test', () => {
   // supposed to be deleted
   // 💡 TIP: You may need to add more than one event to achieve this
 });
+
+// Helper functions
+function shortUniqueValue() {
+  return Math.random().toString(36).slice(-6)
+}
