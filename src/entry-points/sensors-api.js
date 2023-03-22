@@ -69,6 +69,11 @@ function defineAllRoutes(expressApp) {
   router.get('/sensor-events/:id', async (req, res, next) => {
     const sensorsService = new SensorsService();
     const sensorToReturn = await sensorsService.getSensorById(req.params.id);
+
+    if (sensorToReturn === null || (Array.isArray(sensorToReturn) && sensorToReturn.length === 0)) {
+      res.status(404);
+    }
+
     res.json(sensorToReturn);
   });
 
