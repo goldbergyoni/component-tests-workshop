@@ -153,19 +153,24 @@ describe('Sensors test', () => {
     /*
     Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
     */
+    sinon
+        .stub(SensorsService.prototype, 'addEvent')
+        .rejects(new AppError('db-is-unaccessible', false, 500));
 
     // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
     if (process.exit.restore) {
       process.exit.restore();
     }
     const listenToProcessExit = sinon.stub(process, 'exit');
-    */
 
     // Act
+    await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check here whether process.exit was called
+    expect(listenToProcessExit.called).toBe(true);
   });
 
   // ✅🚀 TASK: Check that when uncaught error is thrown, the logger writes the mandatory fields and the process exits
@@ -173,6 +178,7 @@ describe('Sensors test', () => {
   // non-documented crash!
   test('When uncaught exception is thrown, then logger writes the mandatory fields and the process exits', async () => {
     // Arrange
+    const spyOnLogger = sinon.spy(console, 'error');
     if (process.exit.restore) {
       process.exit.restore();
     }
@@ -180,16 +186,39 @@ describe('Sensors test', () => {
 
     // Act
     // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit('uncaughtException', new Error('Fatality'));
 
     // Assert
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject({
+      message: 'Fatality',
+      stack: expect.any(String)
+    });
+    expect(listenToProcessExit.called).toBe(true);
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
   // 💡 TIP: The event process.on('unhandledRejection' , yourCallBack) fires when a rejected promise is not caught error is not caught and will lead to
   // non-documented crash!
+  test('When unhandled rejection exception is occurs, then logger writes the mandatory fields and the process does not exit', async () => {
+    // Arrange
+    const spyOnLogger = sinon.spy(console, 'error');
+    if (process.exit.restore) {
+      process.exit.restore();
+    }
+    const listenToProcessExit = sinon.stub(process, 'exit');
+
+    // Act
+    // 💡 TIP: Explicitly make the process object throw an uncaught exception:
+    process.emit('unhandledRejection', new AppError('cant_touch_this_rejection', false, 500, 'oh no'));
+
+    // Assert
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject({
+      name: 'cant_touch_this_rejection',
+      stack: expect.any(String),
+      isTrusted: false
+    });
+    expect(listenToProcessExit.called).toBe(true);
+  });
 
   // ✅🚀 TASK: Check that for any type of error that is being thrown, whether a valid error object or number or anything else - Our
   //  error handler is capable of handling it
@@ -215,6 +244,9 @@ describe('Sensors test', () => {
         const eventToAdd = getSensorEvent();
 
         // 💡 TIP: make here some code throw the 'errorInstance' variable
+        sinon
+            .stub(SensorsService.prototype, 'addEvent')
+            .rejects(errorInstance);
 
         // 💡 TIP: We should listen here to the logger and metrics exporter - This is how we know that errors were handled
         const metricsExporterDouble = sinon.stub(metricsExporter, 'fireMetric');
@@ -222,14 +254,29 @@ describe('Sensors test', () => {
 
         //Act
         // 💡 TIP: Approach the API like in any other test
+        await request(expressApp)
+            .post('/sensor-events')
+            .send(eventToAdd);
 
         //Assert
         // 💡 TIP: Check that the consoleErrorDouble, metricsExporterDouble were indeed called
+
+        expect(metricsExporterDouble.called).toBe(true);
+        expect(consoleErrorDouble.called).toBe(true);
       },
     );
   });
-});
 
-// ✅🚀 TASK: Test that when the any startup method fails (one that happens before Express is ready), the process do exit
+  // ✅🚀 TASK: Test that when the any startup method fails (one that happens before Express is ready), the process do exit
 // 💡 TIP: If our process is not being able to startup, there is no point in staying alive. This is called a 'zombie' process.
 // 💡 TIP: Since the webserver starts before the tests, you test would need to stub some method and then initialize a new webserver
+//   describe('When any startup method fails, Then the process exit', () => {
+//
+//     test('When defineAllRoutes throws, Then the process exit', async () => {
+//     });
+//
+//     test('When registerErrorHandling throws, Then the process exit', async () => {
+//     });
+//   })
+});
+
