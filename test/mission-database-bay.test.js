@@ -60,7 +60,6 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
   test('When a record exists with a specific reason and trying to add a second one, then it fails with status 409', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
@@ -128,7 +127,6 @@ describe('Sensors test', () => {
   });
 
   // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
-  // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
   test('When an event is deleted, it should not exist anymore', async () => {
     // Arrange
     const eventToAdd = getSensorEvent()
@@ -179,7 +177,16 @@ describe('Sensors test', () => {
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
   // ✅🚀  TASK: Test the following
-  test('When querying for a non-existing event, then get http status 404', () => {});
+  test('When querying for a non-existing event, then get http status 404', async () => {
+    //ARRANGE
+    const nonExistingSensorId = 99999;
+
+    // Act
+    const receivedResult = await request(expressApp).get(`/sensor-events/${nonExistingSensorId}`);
+
+    // Assert
+    expect(receivedResult.status).toBe(404);
+  });
   // 💡 TIP: How could you be sure that an item does not exist? 🤔
 
   // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
