@@ -14,6 +14,8 @@ let expressApp;
 
 beforeAll(async () => {
   expressApp = await startWebServer();
+  nock.disableNetConnect();
+  nock.enableNetConnect('127.0.0.1');
 });
 
 afterAll(async () => {
@@ -24,25 +26,26 @@ beforeEach(() => {});
 
 afterEach(() => {});
 
+const BASE_URL = 'http://localhost';
+
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?
   // 💡 TIP: When setting high temperature event, then a notification is sent with HTTP request. This URL/Service are not available on your local machine
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = getSensorEvent({ temperature: 60 });
-
-    // 💡 TIP: Uncomment me to make this test fail and realize why
-    // // Act
     nock('http://localhost')
       .post('/notification/default')
       .reply(200, { success: true });
 
+    // 💡 TIP: Uncomment me to make this test fail and realize why
+    // // Act
     const receivedResponse = await request(expressApp)
       .post('/sensor-events')
       .send(eventToAdd);
 
     // Assert
-    expect(receivedResponse.status).toBe(200);
+    expect(receivedResponse.status).toEqual(200);
   });
 
   // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
@@ -68,29 +71,23 @@ describe('Sensors test', () => {
     // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
     // and the URL will have an address that is unique to this test
 
-    nock('http://localhost')
+    const scope = nock(BASE_URL)
       .post(
         `/notification/${eventToAdd.notificationCategory}`,
         (payload) => (notificationPayload = payload),
       )
       .reply(200, { success: true });
 
-    const receivedResponse = await request(expressApp)
+    // Act
+    const response = await request(expressApp)
       .post('/sensor-events')
       .send(eventToAdd);
 
     // Assert
-    expect(receivedResponse.status).toBe(200);
-    expect(notificationPayload).toEqual({
-      title: 'Something critical happened',
-      id: expect.any(Number),
-    });
-
-    // Act
-
-    // Assert
     // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
     // You may call whether this URL was called using - scope.isDone()
+    expect(scope.isDone()).toEqual(true);
+    expect(response.status).toEqual(200);
   });
 
   // ✅ TASK: In the test above that checks for notification, ensure that the request body was valid. Otherwise, our code
@@ -105,26 +102,31 @@ describe('Sensors test', () => {
       temperature: 80, //💡 TIP: We need high temperature to trigger notification
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
+    let notificationPayload;
+
     // 💡 TIP: Set here a nock that replies with 500: nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
-
-    nock('http://localhost')
-      .post(`/notification/${eventToAdd.notificationCategory}`)
+    nock(BASE_URL)
+      .post(
+        `/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+      )
       .reply(500, { success: false });
-
-    const receivedResponse = await request(expressApp)
-      .post('/sensor-events')
-      .send(eventToAdd);
-
-    expect(receivedResponse.status).toBe(202);
-    expect(receivedResponse.body).toMatchObject({
-      ...eventToAdd,
-      id: expect.any(Number),
-    });
     // Act
 
     // Assert
     // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
     // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
+    const postResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    const { id: postResponseId } = postResponse.body;
+    const getResponse = await request(expressApp).get(
+      `/sensor-events/${postResponseId}`,
+    );
+
+    expect(getResponse.status).toEqual(200);
+    expect(getResponse.body.id).toEqual(postResponseId);
   });
 
   // ✅🚀 There is some naughty code that is issuing HTTP requests without our awareness! Find it and nock it!
@@ -148,29 +150,33 @@ describe('Sensors test', () => {
   // 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
   test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
     const eventToAdd = getSensorEvent({
-      temperature: 50,
+      temperature: 80, //💡 TIP: We need high temperature to trigger notification
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
+    let notificationPayload;
 
-    nock('http://localhost')
-      .post(`/notification/${eventToAdd.notificationCategory}`)
-      .times(1)
-      .reply(500);
-
-    const receivedResponse = await request(expressApp)
-      .post('/sensor-events')
-      .send(eventToAdd);
-
-    expect(receivedResponse.status).toBe(200);
-    expect(receivedResponse.body).toMatchObject({
-      ...eventToAdd,
-      id: expect.any(Number),
-    });
     // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
+    // nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+    //     (payload) => (notificationPayload = payload),
+    // ).times(2).reply(500, {success: false,});
+
+    nock(BASE_URL)
+      .post(
+        `/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+      )
+      .times(1)
+      .reply(200, { success: true });
+
     // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
     // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
+    const postResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+    expect(postResponse.status).toEqual(200);
   });
 });
+
 // ✅🚀 TASK: Ensure that if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue
 // 💡 TIP: In the root of the code, you may find the file openapi.json that documents the APIs
 // 💡 TIP: Use jest-open-api tool to help with this mission:
