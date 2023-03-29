@@ -5,6 +5,9 @@ const SensorsDal = require('../data-access/sensors-repository');
 const { AppError } = require('../error-handling');
 const MessageQueueClient = require('../libraries/message-queue/mq-client');
 
+axiosRetry(axios, {
+  retries: 3
+})
 class SensorsEventService {
   async addEvent(eventToHandle) {
     let { temperature, category, notificationCategory } = eventToHandle;

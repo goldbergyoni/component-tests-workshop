@@ -14,13 +14,18 @@ let expressApp;
 
 beforeAll(async () => {
   expressApp = await startWebServer();
+  nock.disableNetConnect();
+  nock.enableNetConnect('127.0.0.1')
 });
 
 afterAll(async () => {
   await stopWebServer();
 });
 
-beforeEach(() => {});
+beforeEach(() => {
+  const scope = nock('https://google.com').persist().get('/')
+  .reply(200, {success: true,});
+});
 
 afterEach(() => {});
 
@@ -59,6 +64,65 @@ describe('Sensors test', () => {
     });
     let notificationPayload;
 
+    const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+    ).reply(200, {success: true,});
+
+    const postResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+
+    expect(scope.isDone()).toEqual(true)
+    expect(notificationPayload).toMatchObject({
+      title: 'Something critical happened',
+      id: expect.any(Number)
+    });
+    nock.cleanAll()
+
+
+
+    // 💡 TIP: You need to define here a new nock, so you can listen to it and ensure that the call did happen
+    // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
+    // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
+    // and the URL will have an address that is unique to this test
+    /*
+    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+      ).reply(200, {success: true,});
+      */
+
+    // Act
+
+    // Assert
+    // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
+    // You may call whether this URL was called using - scope.isDone()
+  });
+
+  test('When getting timeout on notifcation, should still add event', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent({
+      temperature: 51,
+      notificationCategory: getShortUnique(),
+    });
+    let notificationPayload;
+
+    const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+    ).delay(1500).reply(200, {success: true,});
+
+    const postResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const id = postResponse.body.id;
+
+
+    expect(scope.isDone()).toEqual(true)
+    const getResponse = await request(expressApp).get(`/sensor-events/${id}`)
+    expect(getResponse.status).toEqual(200)
+    expect(getResponse.body).toMatchObject({
+      id
+    });
+    nock.cleanAll()
+
+
+
     // 💡 TIP: You need to define here a new nock, so you can listen to it and ensure that the call did happen
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
     // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
@@ -88,11 +152,22 @@ describe('Sensors test', () => {
       temperature: 80, //💡 TIP: We need high temperature to trigger notification
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
+    const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+    ).reply(500);
     // 💡 TIP: Set here a nock that replies with 500: nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
 
     // Act
+    const postResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const id = postResponse.body.id;
 
     // Assert
+    expect(scope.isDone()).toEqual(true);
+    const getResponse = await request(expressApp).get(`/sensor-events/${id}`)
+    expect(getResponse.status).toEqual(200)
+    expect(getResponse.body).toMatchObject({
+      id
+    });
     // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
     // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
   });
@@ -117,10 +192,31 @@ describe('Sensors test', () => {
 
 // ✅🚀 TASK: Write the following test below
 // 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
-test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', () => {
+test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
   // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
   // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
   // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
+  const eventToAdd = getSensorEvent({
+    temperature: 80, //💡 TIP: We need high temperature to trigger notification
+    notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+  });
+  const failedScope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+      (payload) => (notificationPayload = payload),
+  ).times(1).reply(500);
+  const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+      (payload) => (notificationPayload = payload),
+  ).times(1).reply(200, {success: true,});
+
+  const postResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+  const id = postResponse.body.id;
+
+  expect(failedScope.isDone()).toEqual(true);
+  expect(scope.isDone()).toEqual(true);
+  const getResponse = await request(expressApp).get(`/sensor-events/${id}`)
+  expect(getResponse.status).toEqual(200)
+  expect(getResponse.body).toMatchObject({
+    id
+  });
 });
 
 // ✅🚀 TASK: Ensure that if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue
