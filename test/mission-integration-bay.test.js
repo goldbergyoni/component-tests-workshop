@@ -23,6 +23,12 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
+  nock('http://localhost')
+      .post('/notification/default')
+      .reply(200, {
+        success: true,
+      })
+      .persist();
 });
 
 afterEach(() => {
@@ -133,6 +139,30 @@ describe('Sensors test', () => {
 // 💡 TIP: Some code contains races between multiple tasks (e.g. Promise.race), for example when waiting for the request for sometime
 // and after sometime invoking alternative code. If the request will always bounce back too quick - The alternative path will never be tested
 // 💡 TIP: Nock is capable of simulating delays: nock(url).post(path).delay(timeInMillisecond)
+
+
+test('When emitting a new event and the response arrives with some delay, then the added event was still saved successfully', async () => {
+  // Arrange
+  const eventToAdd = getSensorEvent({
+    temperature: 80, //💡 TIP: We need high temperature to trigger notification
+    notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+  });
+  nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).delay(5000);
+
+  // Act
+  const addResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+  const getResult = await request(expressApp).get(`/sensor-events/${addResult.body.id}`).send();
+
+  // Assert
+  expect(getResult).toMatchObject({
+    statusCode: 200,
+    body: eventToAdd
+  })
+});
+
 
 // ✅🚀 TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
 // the remote service does not reply at all, we are still able to progress and save the event
