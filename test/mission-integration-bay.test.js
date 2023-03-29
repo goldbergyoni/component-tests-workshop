@@ -152,7 +152,6 @@ describe('Sensors test', () => {
       temperature: 80, //💡 TIP: We need high temperature to trigger notification
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
-    let notificationPayload;
 
     // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
     // nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
