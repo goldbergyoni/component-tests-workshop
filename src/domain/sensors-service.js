@@ -1,9 +1,12 @@
-const axios = require('axios');
-const axiosRetry = require('axios-retry');
 const sanitizeService = require('../domain/sanitize-service');
 const SensorsDal = require('../data-access/sensors-repository');
 const { AppError } = require('../error-handling');
 const MessageQueueClient = require('../libraries/message-queue/mq-client');
+const axios = require('axios');
+const axiosRetry = require('axios-retry');
+const {isNetworkError, isRetryableError} = require("axios-retry");
+
+axiosRetry(axios, { retries: 3, retryCondition: (error) => isNetworkError(error) || isRetryableError(error) } );
 
 class SensorsEventService {
   async addEvent(eventToHandle) {

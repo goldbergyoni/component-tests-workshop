@@ -143,7 +143,26 @@ describe('Sensors test', () => {
 
 // ✅🚀 TASK: Write the following test below
 // 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
-test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', () => {
+test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
+  const eventToAdd = getSensorEvent({
+    temperature: 80, //💡 TIP: We need high temperature to trigger notification
+    notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+  });
+
+  nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).times(2).reply(500);
+  const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, {
+    success: true,
+  });
+
+  await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+  // Assert
+  // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
+  // You may call whether this URL was called using - scope.isDone()
+//  expect(response.body).toMatchObject({notificationSent: true})
+  expect(scope.isDone()).toEqual(true);
   // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
   // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
   // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
