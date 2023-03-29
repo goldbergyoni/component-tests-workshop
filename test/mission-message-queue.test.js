@@ -83,7 +83,7 @@ test('Whenever an invalid events arrives, then its being rejected', async () => 
 
   await messageQueueClient.publish('sensor.events', 'events.new', eventToPublish);
 
-  messageQueueClient.waitFor('nack', 1);
+  await messageQueueClient.waitFor('nack', 1);
 
   const res = await request(expressApp).get(
       `/sensor-events/${eventToPublish.category}/category`,
