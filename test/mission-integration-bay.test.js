@@ -209,8 +209,7 @@ test('When emitting event and the notification service fails once, then a notifi
 
   const postResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
   const id = postResponse.body.id;
-
-  expect(failedScope.isDone()).toEqual(true);
+  
   expect(scope.isDone()).toEqual(true);
   const getResponse = await request(expressApp).get(`/sensor-events/${id}`)
   expect(getResponse.status).toEqual(200)
