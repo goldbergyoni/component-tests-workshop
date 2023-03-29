@@ -34,7 +34,7 @@ describe('Sensors test', () => {
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
     const eventToAdd = getSensorEvent({ temperature: 60 });
-    nock('http://localhost')
+    nock(BASE_URL)
       .post('/notification/default')
       .reply(200, { success: true });
 
@@ -64,7 +64,6 @@ describe('Sensors test', () => {
       temperature: 51,
       notificationCategory: getShortUnique(),
     });
-    let notificationPayload;
 
     // 💡 TIP: You need to define here a new nock, so you can listen to it and ensure that the call did happen
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
