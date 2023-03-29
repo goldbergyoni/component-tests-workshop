@@ -23,7 +23,7 @@ class QueueSubscriber {
         const newMessageAsObject = JSON.parse(message);
 
         // ️️️✅ Best Practice: Validate incoming MQ messages using your validator framework (simplistic implementation below)
-        if (!newMessageAsObject.category) {
+        if (!newMessageAsObject.category || !newMessageAsObject.color) {
           throw new AppError('invalid-message', 'Unknown message schema');
         }
 
