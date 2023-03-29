@@ -14,6 +14,8 @@ let expressApp;
 
 beforeAll(async () => {
   expressApp = await startWebServer();
+  nock.disableNetConnect();
+  nock.enableNetConnect('127.0.0.1')
 });
 
 afterAll(async () => {
@@ -26,10 +28,6 @@ beforeEach(() => {
 afterEach(() => {
   nock.cleanAll()
 });
-
-//beforeAll(() => {
-//  nock.enableNetConnect('127.0.0.1');
-//})
 
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?
@@ -89,7 +87,7 @@ describe('Sensors test', () => {
     expect({ isDone: scope.isDone(), notificationPayload } ).toMatchObject({
       isDone: true,
       notificationPayload: {
-        title: expect.any(String), //'Something critical happened',
+        title: 'Something critical happened',
         id: expect.any(Number),
       }
     });
