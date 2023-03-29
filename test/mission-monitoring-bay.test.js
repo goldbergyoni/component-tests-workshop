@@ -72,6 +72,7 @@ describe('Sensors test', () => {
     sinon
       .stub(SensorsEventService.prototype, 'addEvent')
       .rejects(new AppError('db-is-unaccessible', true, 500));
+    const metricsExporterStub = sinon.stub(metricsExporter, 'fireMetric');
 
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
@@ -81,6 +82,11 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     expect(postRequest.status).toEqual(500);
+
+    expect(metricsExporterStub.callCount).toEqual(1);
+    expect(metricsExporterStub.firstCall.args[0]).toBe('error');
+    metricsExporter.fireMetric.restore();
+    SensorsEventService.prototype.addEvent.restore();
   });
 
   // ✅ TASK: Code the following test below
