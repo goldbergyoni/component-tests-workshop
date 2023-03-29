@@ -13,6 +13,8 @@ const {
 const {getShortUnique, getSensorEvent} = require('./test-helper');
 let expressApp;
 beforeAll(async () => {
+    nock.disableNetConnect();
+    nock.enableNetConnect('127.0.0.1');
     expressApp = await startWebServer();
 });
 
@@ -20,13 +22,10 @@ afterAll(async () => {
     await stopWebServer();
 });
 
-beforeEach(() => {
-    nock.enableNetConnect('127.0.0.1');
-});
+beforeEach(() => {});
 
 afterEach(() => {
     nock.cleanAll();
-    nock.disableNetConnect();
 });
 
 
