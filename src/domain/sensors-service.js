@@ -1,9 +1,13 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry');
+
+axiosRetry(axios, { retries: 1 });
+
 const sanitizeService = require('../domain/sanitize-service');
 const SensorsDal = require('../data-access/sensors-repository');
 const { AppError } = require('../error-handling');
 const MessageQueueClient = require('../libraries/message-queue/mq-client');
+
 
 class SensorsEventService {
   async addEvent(eventToHandle) {

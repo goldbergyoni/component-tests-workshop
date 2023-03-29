@@ -13,6 +13,8 @@ const { getShortUnique, getSensorEvent } = require('./test-helper');
 let expressApp;
 
 beforeAll(async () => {
+  nock.disableNetConnect();
+  nock.enableNetConnect('127.0.0.1')
   expressApp = await startWebServer();
 });
 
@@ -20,9 +22,13 @@ afterAll(async () => {
   await stopWebServer();
 });
 
-beforeEach(() => {});
+beforeEach(() => {
+  nock('http://localhost').post('/notification/default').reply(200, { success: true });
+});
 
-afterEach(() => {});
+afterEach(() => {
+  nock.cleanAll();
+});
 
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?
@@ -33,12 +39,12 @@ describe('Sensors test', () => {
 
     // 💡 TIP: Uncomment me to make this test fail and realize why
     // // Act
-    // const receivedResponse = await request(expressApp)
-    //   .post('/sensor-events')
-    //   .send(eventToAdd);
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
-    // expect(receivedResponse.status).toBe(200);
+    expect(receivedResponse.status).toBe(200);
   });
 
   // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
@@ -63,17 +69,22 @@ describe('Sensors test', () => {
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
     // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
     // and the URL will have an address that is unique to this test
-    /*
-    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
-        (payload) => (notificationPayload = payload),
-      ).reply(200, {success: true,});
-      */
+
+    const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+      (payload) => (notificationPayload = payload),
+    ).reply(200, { success: true, });
 
     // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
     // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
     // You may call whether this URL was called using - scope.isDone()
+    expect(scope.isDone()).toBe(true);
+    expect(notificationPayload).toMatchObject({
+      id: expect.any(Number),
+      title: 'Something critical happened',
+    });
   });
 
   // ✅ TASK: In the test above that checks for notification, ensure that the request body was valid. Otherwise, our code
@@ -88,13 +99,70 @@ describe('Sensors test', () => {
       temperature: 80, //💡 TIP: We need high temperature to trigger notification
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
-    // 💡 TIP: Set here a nock that replies with 500: nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
+    // 💡 TIP: Set here a nock that replies with 500:
+
+    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`);
 
     // Act
+    const responseOnPost = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const responseOnGet = await request(expressApp).get(`/sensor-events/${responseOnPost.body.id}`).send();
 
     // Assert
     // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
     // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
+    expect(responseOnGet).toMatchObject({
+      statusCode: 200,
+      body: eventToAdd
+    })
+  });
+
+
+  test('When emitting a new event and the response arrives with some delay, then the added event was still saved successfully', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent({
+      temperature: 80, //💡 TIP: We need high temperature to trigger notification
+      notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+    });
+    // 💡 TIP: Set here a nock that replies with 500:
+
+    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).delay(5000);
+
+    // Act
+    const responseOnPost = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const responseOnGet = await request(expressApp).get(`/sensor-events/${responseOnPost.body.id}`).send();
+
+    // Assert
+    // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
+    // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
+    expect(responseOnGet).toMatchObject({
+      statusCode: 200,
+      body: eventToAdd
+    })
+  });
+
+  test('When emitting a new event and the response arrives with some delay, then the added event was still saved successfully', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent({
+      temperature: 80, //💡 TIP: We need high temperature to trigger notification
+      notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+    });
+    // 💡 TIP: Set here a nock that replies with 500:
+
+    // Axios Default Timeout = 1000;
+
+    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).delay(10000);
+
+    // Act
+    const responseOnPost = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const responseOnGet = await request(expressApp).get(`/sensor-events/${responseOnPost.body.id}`).send();
+
+    // Assert
+    // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
+    // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
+    expect(responseOnGet).toMatchObject({
+      statusCode: 200,
+      body: eventToAdd
+    })
   });
 });
 
@@ -117,10 +185,33 @@ describe('Sensors test', () => {
 
 // ✅🚀 TASK: Write the following test below
 // 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
-test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', () => {
-  // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
-  // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
-  // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
+test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
+  // Arrange
+  const eventToAdd = getSensorEvent({
+    temperature: 80,
+    notificationCategory: getShortUnique(),
+  });
+
+  nock('http://localhost')
+    .post(`/notification/${eventToAdd.notificationCategory}`)
+    .reply(500, 'Server Unavailable')
+    .post(`/notification/${eventToAdd.notificationCategory}`)
+    .reply(500, 'Server Unavailable')
+    .post(`/notification/${eventToAdd.notificationCategory}`)
+    .reply(200, { success: true });
+
+  // Act
+  const responseOnPost = await request(expressApp).post('/sensor-events').send(eventToAdd);
+  const responseOnGet = await request(expressApp).get(`/sensor-events/${responseOnPost.body.id}`).send();
+
+  // Assert
+  // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
+  // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
+  expect(responseOnGet).toMatchObject({
+    statusCode: 200,
+    body: eventToAdd
+  })
+
 });
 
 // ✅🚀 TASK: Ensure that if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue
