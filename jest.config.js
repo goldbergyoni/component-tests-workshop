@@ -7,7 +7,7 @@ module.exports = {
   forceExit: true,
   testEnvironment: 'node',
   notify: true,
-  setupFilesAfterEnv: ['jest-extended'],
+  setupFilesAfterEnv: ['jest-extended/all'],
   globalSetup: './test/setup/global-setup.js',
   globalTeardown: './test/setup/global-teardown.js',
   notifyMode: 'change',
