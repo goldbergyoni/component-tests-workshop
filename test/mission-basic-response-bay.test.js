@@ -12,6 +12,8 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
+const SensorsService = require("../src/domain/sensors-service");
+const SensorsEventService = require("../src/domain/sensors-service");
 
 let expressApp;
 
@@ -34,10 +36,10 @@ afterEach(() => {
 });
 
 describe('Sensors test', () => {
-  // ✅ TASK: Run the testing and ensure the the next simplistic test pass
+  // ✅ TASK: Run the testing and ensure the next simplistic test pass
   test('Just checking that testing works on your machine', () => {
     expect('Me boosting my testing knowledge in the workshop').toBeTruthy();
-    // 💡 TIP: The the tests in watch mode: npm run test:dev
+    // 💡 TIP: The tests in watch mode: npm run test:dev
     // 💡 TIP: When in watch mode, within the terminal/CMD type "p" -> Then start typing this file name, choose it
     //  It should run only this file. Click "w" to return to the main menu
   });
@@ -54,14 +56,14 @@ describe('Sensors test', () => {
       category: 'Kids-Room',
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
-
+    eventToAdd["category"] = undefined;
     // Act
-
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-
+    expect(receivedResponse.status).toBe(400);
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
   });
@@ -70,10 +72,26 @@ describe('Sensors test', () => {
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+    };
     // Act
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
     // Assert
+    expect(receivedResponse).toMatchObject({status: 200, body: {
+        temperature: 20,
+        color: 'Green',
+        weight: 80,
+        status: 'active',
+        category: 'Kids-Room'
+      }});
+
     // 💡 TIP: You may check the body and the status all together with the following syntax:
     // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
   });
@@ -81,20 +99,62 @@ describe('Sensors test', () => {
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
+  test('When inserting a valid event, event should be retrievable', async () => {
+    // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Blue',
+      weight: 80,
+      status: 'active',
+      category: 'Kitchen',
+    };
+    // Act
+    const retrievedOrder = JSON.parse((await request(expressApp).post("/sensor-events").send(eventToAdd)).text);
+    console.log(`id ${retrievedOrder.id} `)
+    console.log(JSON.stringify(retrievedOrder))
+    //const receivedResponse = await request(expressApp).get(`/sensor-events/`);
+    const receivedResponse = await request(expressApp).get(`/sensor-events/${retrievedOrder.id}`);
+    console.log(JSON.stringify(receivedResponse))
 
+    // Assert
+    expect(receivedResponse.status).toBe(200);
+    expect(JSON.parse(receivedResponse.text)).toMatchObject( {
+        temperature: 20,
+        color: 'Blue',
+        weight: 80,
+        status: 'active',
+        category: 'Kitchen',
+      });
+
+  });
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
 
   // ✅🚀 TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
     // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Blue',
+      weight: 80,
+      status: 'active',
+      category: 'Kitchen',
+    };
+
+    sinon.stub(SensorsEventService.prototype, 'addEvent').throws(new Error("Error explanation"));
+
+    // Act
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
     // 💡 TIP: Factor a valid event here, otherwise the request will get rejected on start and the failure won't happen
     // 💡 TIP: Make some internal function fail, choose any class method
     // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
     //  https://sinonjs.org/releases/latest/stubs/
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
-    // Act
+
     // Assert
+    expect(receivedResponse.status).toBe(500);
+
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
