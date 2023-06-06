@@ -2,7 +2,7 @@
 
 <br/>
 
-## Master Node.js Testing
+## Master Node.js Testing 
 
 <br/>
 
@@ -10,7 +10,7 @@
 
 This workshop is a very deep dive into writing real-world and modern backend testing. Most traditional testing guides focus on testing functions and units. In their daily routine though, developers are challenged with covering all the layers of their components - Database, APIs, MQ, metrics, 3rd parties, and more - not just logic functions. This workshop is all about writing these realistic tests in the RIGHT way. Overall, it packs 25+ best practices and 20 hands-on exercises that will open your mind to modern testing techniques. 🚀. Warning: You might fall in love with testing 💚
 
-![Header](/graphics/component-diagram.jpg 'Component Tests')
+![Header1](/graphics/component-diagram.jpg 'Component Tests')
 
 <br/><br/><br/>
 
