@@ -11,7 +11,7 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const SensorsService = require('../src/domain/sensors-service');
-const { getShortUnique, getSensorEvent } = require('./test-helper');
+const { getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
 
 let expressApp;
