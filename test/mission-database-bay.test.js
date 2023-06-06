@@ -84,6 +84,7 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent();
     const eventWithExistingReason = getSensorEvent({
       reason: eventToAdd.reason,
+      category: getShortUnique()
     });
 
     // Act
@@ -94,6 +95,9 @@ describe('Sensors test', () => {
 
     // Assert
     expect(response.status).toBe(409);
+    const getByCategoryResponse = await request(expressApp).get(`/sensor-events/${eventWithExistingReason.category}/category`).send(eventToAdd);
+
+    expect(getByCategoryResponse.body).toEqual([]);
   });
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
@@ -156,7 +160,6 @@ describe('Sensors test', () => {
       .send(eventToAdd)).body.id;
     
     // Act
-    console.log(`#### ${id} ####`);
     await request(expressApp).delete(`/sensor-events/${id}`);
     
     // Assert
