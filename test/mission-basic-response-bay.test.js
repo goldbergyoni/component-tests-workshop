@@ -96,7 +96,7 @@ describe('Sensors test', () => {
     const id = (await request(expressApp).post('/sensor-events').send(eventToAdd)).body.id;
 
     // Assert
-    const receivedResponse = await request(expressApp).get(`/sensor-events/${id}`).send(eventToAdd);
+    const receivedResponse = await request(expressApp).get(`/sensor-events/${id}`);
     expect(receivedResponse).toMatchObject({
       status: 200,
       body: eventToAdd
