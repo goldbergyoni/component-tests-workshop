@@ -1,3 +1,4 @@
 {
-  "git.enabled": false
+  "git.enabled": false,
+  "workbench.colorCustomizations": {}
 }
