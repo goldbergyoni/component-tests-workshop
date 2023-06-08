@@ -10,7 +10,6 @@ const {
   startWebServer,
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
-const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
 const SensorsService = require("../src/domain/sensors-service");
 
