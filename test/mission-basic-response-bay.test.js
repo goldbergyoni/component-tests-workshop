@@ -46,9 +46,6 @@ describe('Sensors test', () => {
   // ✅ TASK: Run the testing and ensure the the next simplistic test pass
   test('Just checking that testing works on your machine', () => {
     expect('Me boosting my testing knowledge in the workshop').toBeTruthy();
-    // 💡 TIP: The the tests in watch mode: npm run test:dev
-    // 💡 TIP: When in watch mode, within the terminal/CMD type "p" -> Then start typing this file name, choose it
-    //  It should run only this file. Click "w" to return to the main menu
   });
 
   // ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
@@ -58,9 +55,7 @@ describe('Sensors test', () => {
     const eventToAdd = {...event, category: undefined};
 
     // Act
-    const response = await request(expressApp)
-      .post('/sensor-events')
-      .send(eventToAdd);
+    const response = await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
     expect(response.status).toBe(400);
@@ -93,6 +88,16 @@ describe('Sensors test', () => {
     // Assert
     expect(response.status).toBe(200);
     expect(JSON.parse(response.text)).toMatchObject(event);
+  });
+
+  test("When getting an event that doesn't exist, text is empty", async () => {
+    // Arrange
+
+    // Act
+    const response = await request(expressApp).get(`/sensor-events/12222`);
+
+    // Assert
+    expect(response.text).toBe("null");
   });
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
