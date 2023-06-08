@@ -12,6 +12,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
+const SensorsService = require('../src/domain/sensors-service');
 
 let expressApp;
 
@@ -46,22 +47,18 @@ describe('Sensors test', () => {
   // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
-    const eventToAdd = {
-      temperature: 20,
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-      category: 'Kids-Room',
+    const eventToAdd = getSensorEvent({
+      category: undefined
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
-    };
+    });
+
 
     // Act
-
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
-
     // Assert
-
+    expect(response).toMatchObject({status: 400});
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
   });
@@ -69,6 +66,12 @@ describe('Sensors test', () => {
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
+    const eventToAdd = getSensorEvent({
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    });
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    expect(response).toMatchObject({status: 200, body: {...eventToAdd}});
+
     // Arrange
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
@@ -81,6 +84,16 @@ describe('Sensors test', () => {
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
   // 💡 TIP: In the assert phase, query to get the event that was added
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
+  test('When inserting valid event, the event is retrievable from the API', async () => {
+    const eventToAdd = getSensorEvent({
+      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+    });
+    const {body: newEvent} = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    const {body: fetchedEvent} = await request(expressApp).get(`/sensor-events/${newEvent.id}`);
+
+    expect(fetchedEvent).toMatchObject(newEvent);
+  })
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
@@ -89,12 +102,17 @@ describe('Sensors test', () => {
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
     // Arrange
     // 💡 TIP: Factor a valid event here, otherwise the request will get rejected on start and the failure won't happen
+    const eventToAdd = getSensorEvent({});
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(new Error("Error explanation"));
     // 💡 TIP: Make some internal function fail, choose any class method
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
     // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
     //  https://sinonjs.org/releases/latest/stubs/
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
     // Act
     // Assert
+    expect(response).toMatchObject({status: 500})
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
