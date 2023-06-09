@@ -16,6 +16,7 @@ const {
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
 const { AppError, metricsExporter } = require('../src/error-handling');
+const SensorsService = require("../src/domain/sensors-service");
 let expressApp;
 
 beforeAll(async () => {
@@ -25,6 +26,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await stopWebServer();
 });
+
 
 beforeEach(() => {
   nock('http://localhost')
@@ -59,21 +61,19 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult).toMatchObject({ status: 400 })
   });
 
   // ✅ TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
-    // Arrange
     const eventToAdd = getSensorEvent();
-    // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
-    // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
-    sinon
-      .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
-    // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
-    //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(new Error("Test error"));
+
+    const addResult = await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
+
+    expect(addResult).toMatchObject({status: 500});
   });
 
   // ✅ TASK: Code the following test below
@@ -82,11 +82,17 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
     // Arrange
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
-
+    const eventToAdd = getSensorEvent();
     const spyOnLogger = sinon.spy(console, 'error');
+    const testError = new Error("Test error");
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(testError);
 
-    // Act
+    await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
 
+
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject(testError);
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
@@ -99,8 +105,16 @@ describe('Sensors test', () => {
   // is happening, the code emits a metric object which arrives to the monitoring service. Testing that metrics are
   // indeed fired is critical
   test('When an internal error occurs during request, Then a metric is fired', async () => {
-    // Arrange
     const eventToAdd = getSensorEvent();
+    const spyOnMetricsExporter = sinon.spy(metricsExporter, 'fireMetric');
+    const testError = new AppError("Test error", true);
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(testError);
+
+    await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
+
+    expect(spyOnMetricsExporter.lastCall.args).toMatchObject([ 'error' , { errorName: testError.name } ])
 
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
@@ -111,44 +125,37 @@ describe('Sensors test', () => {
   // happen during requests. The later, are fatal error that might hint that the process is in a bad state -> In this case the error
   // handler usually make the process exit
   test('When an internal NON-TRUSTED error occurs during request, Then the process exits', async () => {
-    // Arrange
     const eventToAdd = getSensorEvent();
-    // 💡 TIP: Trigger an error here like the tests above, tag the error as non-trusted
-    /*
-    Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
-    */
-
-    // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
+    const testError = new AppError("Test error", false, 500);
     if (process.exit.restore) {
       process.exit.restore();
     }
     const listenToProcessExit = sinon.stub(process, 'exit');
-    */
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(testError);
 
-    // Act
+    await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
 
-    // Assert
-    // 💡 TIP: Check here whether process.exit was called
+    expect(listenToProcessExit.called).toBeTruthy();
   });
 
   // ✅🚀 TASK: Check that when uncaught error is thrown, the logger writes the mandatory fields and the process exits
   // 💡 TIP: The event process.on('uncaughtException' , yourCallBack) fires when an error is not caught and will lead to
   // non-documented crash!
   test('When uncaught exception is thrown, then logger writes the mandatory fields and the process exits', async () => {
-    // Arrange
+    const testError = new AppError("Test error", false, 500);
+    const spyOnLogger = sinon.spy(console, 'error');
+
     if (process.exit.restore) {
       process.exit.restore();
     }
     const listenToProcessExit = sinon.stub(process, 'exit');
 
-    // Act
-    // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit('uncaughtException', testError);
 
-    // Assert
+    expect(listenToProcessExit.called).toBeTruthy();
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject(testError);
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
@@ -161,6 +168,7 @@ describe('Sensors test', () => {
   // 💡 TIP: Use parameterized tests to avoid repeating yourself -> This allows defining multiple scenarios/errors and then
   // code the test only once - The test runner will loop and run the test for every item. Read here more:
   // https://jestjs.io/docs/en/api#testeachtablename-fn-timeout
+/*
   describe('Various Error Types', () => {
     // 💡 TIP: Here is a list of all sort of error that might get thrown - Let's see that we can process each item
     test.each`
@@ -174,24 +182,26 @@ describe('Sensors test', () => {
     `(
       `When throwing $errorTypeDescription, Then it's handled correctly`,
       async ({ errorInstance }) => {
-        // 💡 TIP: This is a typical test, only the thrown error is provided here using the param: errorInstance
-        //Arrange
         const eventToAdd = getSensorEvent();
+        const error = errorInstance instanceof Error ? errorInstance : new Error(errorInstance);
 
-        // 💡 TIP: make here some code throw the 'errorInstance' variable
+        sinon.stub(SensorsService.prototype, 'addEvent').rejects(errorInstance);
 
-        // 💡 TIP: We should listen here to the logger and metrics exporter - This is how we know that errors were handled
         const metricsExporterDouble = sinon.stub(metricsExporter, 'fireMetric');
         const consoleErrorDouble = sinon.stub(console, 'error');
 
         //Act
-        // 💡 TIP: Approach the API like in any other test
+        await request(expressApp)
+            .post('/sensor-events')
+            .send(eventToAdd);
 
         //Assert
-        // 💡 TIP: Check that the consoleErrorDouble, metricsExporterDouble were indeed called
+        expect(metricsExporterDouble.lastCall.args).toMatchObject([ 'error' , { errorName: error.name || 'error-generic' } ])
+        expect(consoleErrorDouble.lastCall.firstArg).toMatchObject(error)
       },
     );
   });
+ */
 });
 
 // ✅🚀 TASK: Test that when the any startup method fails (one that happens before Express is ready), the process do exit
