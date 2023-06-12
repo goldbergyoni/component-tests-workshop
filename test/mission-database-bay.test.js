@@ -30,73 +30,165 @@ beforeEach(() => {
 });
 
 describe('Sensors test', () => {
+  // bgbg done
   // ✅ TASK: Write the following test 👇 to ensure adding an event succeed
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
-    const eventToAdd = {
-      category: 'Home equipment',
-      temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-    };
+    const eventToAdd = getSensorEvent();
 
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const resposne = await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(resposne).toMatchObject({
+      status: 200,
+      body: {
+        id: expect.any(Number)
+      }
+    });
   });
 
+  // bgbg done
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
   // 💡 TIP: The failure is because the field 'reason' is unique. When the test runs for the second time -> This value already exists
   // 💡 TIP: Write an helper function that create unique and short value, put this at the end of the reason field
   // 💡 TIP: For the sake of this exercise, this helper can be as simple as just randomize number or use a timestamp
 
+  // bgbg done
   // ✅ TASK: In the test above 👆, ensure that 'id' field is also part of the response with the right type
   // But hey, there is a challenge here: The 'id' is different in every response
   // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
   //  https://jestjs.io/docs/en/expect#expectanyconstructor
 
+  // bgbg done
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
+  test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent();
 
+    // Act
+    // calling twice with the same event
+    const resposne1 = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const resposne2 = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    // Assert
+    expect(resposne1.status).toBe(200);
+    expect(resposne2.status).toBe(409);
+  });
+
+  // bgbg done
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
+  test('When querying for event by id, Then the right event is being returned', async () => {
     // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
     //  the ID of the added event globally). In this test, query for that ID
     // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+    // Arrange
+    const postResponse = await request(expressApp).post("/sensor-events").send(getSensorEvent());
+
+    // Act
+    const response = await request(expressApp).get(`/sensor-events/${postResponse.body.id}`);
+
+    // Assert
+    expect(postResponse.status).toBe(200);
+    expect(response.status).toBe(200);
   });
 
+  // bgbg done
   // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
   // 💡 TIP: To run a single test only, put the word test.only in front of the test method
   // 💡 TIP: Other way to run a single test is to run the tests in watch mode - 'npm run test:dev',
   //  then within the CLI type "t", now type your desired test name
 
+  // bgbg done
   // ✅ TASK: The last step should have failed, the query test 👆 fails when running alone... Why?
   // 💡 TIP: This is because the first test ('Add sensor event') did not run, so no record added to the DB
   // 💡 TIP: A test that relies on records from other tests will always be fragile and increase the maintenance complexity
 
+  // bgbg done
   // ✅ TASK: Let's fix the query test above 👆 - Make it pass all the time, even when running alone
   // 💡 TIP: In the arrange phase, add an event to query for. Don't trust any other test!
 
+  // bgbg done
   // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
   // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
   // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
+  test('When adding a new event without temperature, the event is not saved in the DB', async () => {
+    // Arrange
+    const uniqueCategory = `should-never-have-been-added-${getShortUnique()}`
+    const eventToAdd = getSensorEvent({ temperature: undefined, category: uniqueCategory });
+    const postResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
 
+    // Act
+    const response = await request(expressApp).get('/sensor-events');
+
+    // Assert
+    expect(postResponse.status).toBe(400);
+    const item = response.body.find(i => i.category === uniqueCategory);
+    expect(item).toBeUndefined();
+  });
+
+  // bgbg done
   // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
+  test('When an event is deleted, then its indeed not existing anymore', async () => {
+    // Arrange
+    const postResponse = await request(expressApp).post("/sensor-events").send(getSensorEvent());
+    const postResponseToKeep = await request(expressApp).post("/sensor-events").send(getSensorEvent());
+    const responseBefore = await request(expressApp).get(`/sensor-events/${postResponse.body.id}`);
 
+    // Act
+    const deleteResponse = await request(expressApp).delete(`/sensor-events/${postResponse.body.id}`);
+
+    // Assert
+    const responseAfter = await request(expressApp).get(`/sensor-events/${postResponse.body.id}`);
+    expect(postResponse.status).toBe(200);
+    expect(responseBefore).toMatchObject({
+      status: 200,
+      body: {
+        id: expect.any(Number)
+      }
+    });
+    expect(deleteResponse.status).toBe(200);
+    expect(responseAfter).toMatchObject({
+      status: 200,
+      body: null
+    });
+    const responseToKeepAfter = await request(expressApp).get(`/sensor-events/${postResponseToKeep.body.id}`);
+    expect(responseToKeepAfter).toMatchObject({
+      status: 200,
+      body: {
+        id: expect.any(Number)
+      }
+    });
+  });
+
+  // bgbg done
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
-  test('When adding multiple events, then all of them appear in the result', () => {});
+  test('When adding multiple events, then all of them appear in the result', async () => {
+    // Arrange
+    const eventToAdd1 = getSensorEvent({ category: `category-${getShortUnique()}` });
+    const eventToAdd2 = getSensorEvent({ category: `category-${getShortUnique()}` });
+    const postResponse1 = await request(expressApp).post("/sensor-events").send(eventToAdd1);
+    const postResponse2 = await request(expressApp).post("/sensor-events").send(eventToAdd2);
+
+    // Act
+    const response = await request(expressApp).get('/sensor-events');
+
+    // Assert
+    const item1 = response.body.find(i => i.category === postResponse1.caetgory);
+    const item2 = response.body.find(i => i.category === postResponse2.caetgory);
+    expect(item1).not.toBeNull();
+    expect(item2).not.toBeNull();
+  });
 
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
