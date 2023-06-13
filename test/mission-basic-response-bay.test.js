@@ -93,7 +93,7 @@ describe('Sensors test', () => {
 
 
     const matchingRecord = await request(expressApp).get(
-        `/sensor-events/${eventToAdd.category}/reason`,
+        `/sensor-events/${eventToAdd.reason}/reason`,
     );
     expect(matchingRecord).toMatchObject(matchingRecord);
   });
