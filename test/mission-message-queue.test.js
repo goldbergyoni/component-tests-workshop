@@ -37,7 +37,10 @@ beforeEach(() => {
 // 💡 TIP: Use the public API to fetch the event and ensure it exists
 test('Whenever a new sensor event arrives, then its retrievable', async () => {
   // Arrange
-  const eventToPublish = testHelpers.getSensorEvent();
+  const randomCategory = `queue-category-test-${testHelpers.getShortUnique()}`;
+  const eventToPublish = testHelpers.getSensorEvent({
+    category: randomCategory,
+  });
   // 💡 TIP: Assign unique value to the category field, so you can query later for this unique event
 
   const messageQueueClient = await testHelpers.startMQSubscriber(
@@ -46,19 +49,55 @@ test('Whenever a new sensor event arrives, then its retrievable', async () => {
   );
 
   // Act
+  messageQueueClient.publish('events.new', 'new-test', eventToPublish);
   // 💡 TIP: The message queue client has a publish function for new messages. This will go into a fake
   // in-memory queue because this is what was instructed on the statement above
 
   // Assert
-  // 💡 TIP: Use waitFor 👇 to ensure the transaction has finished it's the right time to assert
-  // Here is the syntax: 'messageQueueClient.waitFor('ack', 1);'
-  // 💡 TIP: Verify the expectations here
+  messageQueueClient.waitFor('ack', 1);
+
+  const getResponse = await request(expressApp).get(
+    `/sensor-events/${randomCategory}/category`,
+  );
+
+  expect(getResponse.body.length).toBe(1);
+  expect(getResponse.body[0]).toMatchObject({
+    category: randomCategory,
+  });
+
 });
 
 // ✅ TASK: Test that when an invalid event is put in the queue, then its rejected
 // 💡 TIP: Assign an invalid value to some field to make the system reject this new event
 // 💡 TIP: Use the messageQueueClient.waitFor function to wait for the reject event
-test('Whenever an invalid events arrives, then its being rejected', async () => {});
+test('Whenever an invalid events arrives, then its being rejected', async () => {
+    // Arrange
+    const randomCategory = `queue-category-test-${testHelpers.getShortUnique()}`;
+    const eventToPublish = testHelpers.getSensorEvent({
+      category: randomCategory,
+      temperature: undefined
+    });
+    // 💡 TIP: Assign unique value to the category field, so you can query later for this unique event
+  
+    const messageQueueClient = await testHelpers.startMQSubscriber(
+      'fake',
+      'events.new',
+    );
+  
+    // Act
+    messageQueueClient.publish('events.new', 'new-test', eventToPublish);
+    // 💡 TIP: The message queue client has a publish function for new messages. This will go into a fake
+    // in-memory queue because this is what was instructed on the statement above
+  
+    // Assert
+    messageQueueClient.waitFor('ack', 1);
+  
+    const getResponse = await request(expressApp).get(
+      `/sensor-events/${randomCategory}/category`,
+    );
+  
+    expect(getResponse.body.length).toBe(0);
+});
 
 // ✅ TASK: Test the same scenario like above 👆 (invalid message), only this time ensure that the event was not saved to DB
 
