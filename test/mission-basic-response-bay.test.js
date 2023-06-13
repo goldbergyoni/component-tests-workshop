@@ -49,14 +49,8 @@ describe('Sensors test', () => {
   // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
-    const eventToAdd = {
-      temperature: 20,
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-      category: undefined,
-      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
-    };
+
+    const eventToAdd = getSensorEvent({ category: undefined });
 
     // Act
     let receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
