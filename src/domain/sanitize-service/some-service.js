@@ -2,9 +2,9 @@
 const axios = require('axios');
 
 async   function someFunctionThatNobodyPaysAttentionTo() {
-  try {
+  // try {
     await axios.get('https://google.com');
-  } catch (e) {}
+  // } catch (e) {}
 }
 
 module.exports.sensorValidator = someFunctionThatNobodyPaysAttentionTo;
