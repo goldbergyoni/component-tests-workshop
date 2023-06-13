@@ -29,6 +29,9 @@ class SensorsEventService {
             title: 'Something critical happened',
             id,
           },
+          { 
+            timeout: 3000,
+          }
         );
         eventToHandle.notificationSent = true;
       } catch (error) {
