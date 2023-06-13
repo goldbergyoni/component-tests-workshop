@@ -5,6 +5,9 @@ const SensorsDal = require('../data-access/sensors-repository');
 const { AppError } = require('../error-handling');
 const MessageQueueClient = require('../libraries/message-queue/mq-client');
 
+
+
+
 class SensorsEventService {
   async addEvent(eventToHandle) {
     let { temperature, category, notificationCategory } = eventToHandle;
@@ -29,6 +32,9 @@ class SensorsEventService {
             title: 'Something critical happened',
             id,
           },
+          {
+            timeout: 200
+          }
         );
         eventToHandle.notificationSent = true;
       } catch (error) {

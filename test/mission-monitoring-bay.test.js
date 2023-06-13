@@ -59,6 +59,9 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult).toMatchObject({
+      status: 400,
+    });
   });
 
   // ✅ TASK: Code the following test below
@@ -67,13 +70,23 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent();
     // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
     // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
+
     sinon
-      .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
+      .stub(SensorsRepository.prototype, 'addSensorsEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
+
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+
+    // Act
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    expect(receivedResult).toMatchObject({
+      status: 500,
+    });
   });
 
   // ✅ TASK: Code the following test below
@@ -82,16 +95,24 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
     // Arrange
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
-
+    const eventToAdd = getSensorEvent();
     const spyOnLogger = sinon.spy(console, 'error');
+    sinon
+      .stub(SensorsRepository.prototype, 'addSensorsEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
 
     // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
     // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
+    // Assert
+    expect(spyOnLogger.calledOnce);
+    const call = spyOnLogger.getCall(0);
+    expect(call.args[0].toString().includes('db-is-unaccessible')).toBe(true);
   });
 
   // ✅ TASK: Code the following test below
@@ -101,6 +122,17 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
+
+    const spyOnMetrics = sinon.spy(metricsExporter, 'fireMetric');
+    sinon
+      .stub(SensorsRepository.prototype, 'addSensorsEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
+
+    // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(spyOnMetrics.calledOnce);
 
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
@@ -113,18 +145,16 @@ describe('Sensors test', () => {
   test('When an internal NON-TRUSTED error occurs during request, Then the process exits', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
-    // 💡 TIP: Trigger an error here like the tests above, tag the error as non-trusted
-    /*
-    Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
-    */
+
+    sinon
+      .stub(SensorsRepository.prototype, 'addSensorsEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
 
     // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
     if (process.exit.restore) {
       process.exit.restore();
     }
     const listenToProcessExit = sinon.stub(process, 'exit');
-    */
 
     // Act
 
@@ -137,23 +167,44 @@ describe('Sensors test', () => {
   // non-documented crash!
   test('When uncaught exception is thrown, then logger writes the mandatory fields and the process exits', async () => {
     // Arrange
+    const eventToAdd = getSensorEvent();
     if (process.exit.restore) {
       process.exit.restore();
     }
     const listenToProcessExit = sinon.stub(process, 'exit');
 
-    // Act
-    // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit(
+      'uncaughtException',
+      new AppError('db-is-unaccessible', true, 500),
+    );
+
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
+    expect(listenToProcessExit.calledOnce);
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
   // 💡 TIP: The event process.on('unhandledRejection' , yourCallBack) fires when a rejected promise is not caught error is not caught and will lead to
   // non-documented crash!
+  test('When unhandled rejections is thrown, then logger writes the mandatory fields and the process exits', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent();
+    if (process.exit.restore) {
+      process.exit.restore();
+    }
+    const listenToProcessExit = sinon.stub(process, 'exit');
+
+    process.emit(
+      'unhandledRejection',
+      new AppError('db-is-unaccessible', true, 500),
+    );
+
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(listenToProcessExit.calledOnce);
+  });
 
   // ✅🚀 TASK: Check that for any type of error that is being thrown, whether a valid error object or number or anything else - Our
   //  error handler is capable of handling it
