@@ -10,11 +10,13 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
+const path = require("path");
 const jestOpenAPI = require('jest-openapi').default;
 
-// const sensorValidator = require("..");
+const dirPath = path.join(__dirname, '../src/openapi.json');
 let expressApp;
-jestOpenAPI('/Users/inbaldegroot/Dev/component-tests-workshop/src/openapi.json');
+
+jestOpenAPI(dirPath);
 
 beforeAll(async () => {
   expressApp = await startWebServer();
