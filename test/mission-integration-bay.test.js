@@ -2,7 +2,7 @@
 // ✅ Whenever you see this icon, there's a TASK for you
 // ✅🚀 This symbol represents an advanced task
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
-
+const jestOpenAPI = require('jest-openapi').default;
 const request = require('supertest');
 const nock = require('nock');
 const {
@@ -11,6 +11,8 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 let expressApp;
+jestOpenAPI('/Users/eladbetite/Projects/component-tests-workshop/src/openapi.json');
+
 
 beforeAll(async () => {
   expressApp = await startWebServer();
@@ -210,3 +212,17 @@ test('When emitting event and the notification service fails once, then a notifi
 // 💡 TIP: Use jest-open-api tool to help with this mission:
 // https://www.npmjs.com/package/jest-openapi
 //💡 TIP: If you want to apply this to all tests, put this assertion as axios extension
+test('if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue', async() => {
+  
+  const eventToAdd = getSensorEvent({
+    temperature: 92, //💡 TIP: We need high temperature to trigger notification
+    notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+  });
+  const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, {success: true,});
+
+  const responseObject = await request(expressApp)
+  .post('/sensor-events')
+  .send(eventToAdd);
+  
+  expect(responseObject).toSatisfyApiSpec()
+});
