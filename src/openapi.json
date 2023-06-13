@@ -79,6 +79,16 @@
               }
             }
           },
+          "202": {
+            "description": "Successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Event"
+                }
+              }
+            }
+          },
           "400": {
             "description": "User Not Found",
             "content": {}
