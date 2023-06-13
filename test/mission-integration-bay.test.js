@@ -90,7 +90,6 @@ describe('Sensors test', () => {
      expect(notificationPayload).toMatchObject({
        id: expect.any(Number),
        title: expect.any(String),
-       timeout: 3000
      })
     
   });
