@@ -26,6 +26,7 @@ class SensorsEventService {
         await axios.post(
           `http://localhost/notification/${notificationCategory}`,
           {
+            timeout: 3000,
             title: 'Something critical happened',
             id,
           },

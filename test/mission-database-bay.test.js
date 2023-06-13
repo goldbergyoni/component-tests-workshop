@@ -119,7 +119,6 @@ describe('Sensors test', () => {
     
     const addResponse = await request(expressApp).post("/sensor-events").send(eventToAdd)
     const receivedResponse = await request(expressApp).get(`/sensor-events/${eventToAdd.category}/category`)
-    console.log('receivedResponse',receivedResponse.body);
 
     expect(receivedResponse).toMatchObject({status: 200, body: []});
   });
