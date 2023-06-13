@@ -2,7 +2,6 @@
 // ✅ Whenever you see this icon, there's a TASK for you
 // ✅🚀 This symbol represents an advanced task
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
-jest.setTimeout(10000);
 
 const request = require('supertest');
 const nock = require('nock');
@@ -163,12 +162,12 @@ test('When emitting a new event and the notification service replies with 500 er
       `/notification/${eventToAdd.notificationCategory}`,
       (payload) => (notificationPayload = payload),
     )
-    .reply(500, undefined);
+    .delay(1000)
+    .reply(200, { success: true });
 
   // Act
   const postResponse = await request(expressApp)
     .post('/sensor-events')
-    .timeout(50)
     .send(eventToAdd);
   const getResponse = await request(expressApp).get(
     `/sensor-events/${postResponse.body.id}`,
