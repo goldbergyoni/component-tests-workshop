@@ -10,6 +10,10 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
+const Sinon = require('sinon');
+
+const clock = Sinon.useFakeTimers()
+
 let expressApp;
 jestOpenAPI('/Users/eladbetite/Projects/component-tests-workshop/src/openapi.json');
 
@@ -26,6 +30,8 @@ beforeEach(() => {
   nock('http://localhost').post('/notification/default').reply(200, { success: true });
   nock.disableNetConnect()
   nock.enableNetConnect('127.0.0.1')
+
+  //Use axios interceptors to check that each request is satisfy aginst the openopi
 });
 
 afterEach(() => {
@@ -135,10 +141,10 @@ describe('Sensors test', () => {
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
     // 💡 TIP: Set here a nock that replies with 500: nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
-    const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).delay(2000).reply(200, {success: true,});
+    const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, {success: true,});
     // Act
     const receivedResponse = await request(expressApp)
-    .post('/sensor-events')
+    .post('/sensor-events', () => {clock.tick(2000)})
     .send(eventToAdd);
 
     const receivedResponse2 = await request(expressApp)
@@ -165,10 +171,10 @@ test('When emitting a new event and the notification service is not responding, 
     notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
   });
   // 💡 TIP: Set here a nock that replies with 500: nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
-  const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).delay(4000).reply(200, {success: true,});
+  const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, {success: true,});
   // Act
   const receivedResponse = await request(expressApp)
-  .post('/sensor-events')
+  .post('/sensor-events', () => {clock.tick(4000)})
   .send(eventToAdd);
 
   const receivedResponse2 = await request(expressApp)
@@ -223,5 +229,6 @@ test('if a response is not aligned with the OpenAPI (Swagger), then the tests wi
   .post('/sensor-events')
   .send(eventToAdd);
   
+  expect(scope.isDone()).toBeTrue;
   expect(responseObject).toSatisfyApiSpec()
 });
