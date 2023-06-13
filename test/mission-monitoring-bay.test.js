@@ -13,9 +13,10 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 
-const { getShortUnique, getSensorEvent } = require('./test-helper');
+const {getShortUnique, getSensorEvent} = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
-const { AppError, metricsExporter } = require('../src/error-handling');
+const SensorsService = require('../src/domain/sensors-service')
+const {AppError, metricsExporter} = require('../src/error-handling');
 let expressApp;
 
 beforeAll(async () => {
@@ -51,7 +52,7 @@ describe('Sensors test', () => {
     // Arrange
     // 💡 TIP: See below how we explicitly define and emphasize what's wrong with the input
     // 💡 TIP: When using external helpers, make it clear for the test reader what is happening
-    const eventToAdd = getSensorEvent({ category: undefined });
+    const eventToAdd = getSensorEvent({category: undefined});
 
     // Act
     const receivedResult = await request(expressApp)
@@ -59,21 +60,30 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400)
   });
 
   // ✅ TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(new AppError('db-is-unaccessible', true, 500))
     // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
     // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
     /*
     sinon
       .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
+      .rejects(new AppError('db-is-unaccessible', true, 500));
     */
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+    // Act
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    expect(receivedResult.status).toBe(500)
   });
 
   // ✅ TASK: Code the following test below
@@ -81,13 +91,25 @@ describe('Sensors test', () => {
   // and a good case to make an exception for
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
     // Arrange
+    const eventToAdd = getSensorEvent();
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
 
-    const spyOnLogger = sinon.spy(console, 'error');
+    const err  = new AppError('db-is-unaccessible', true, 500)
 
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(err)
+
+    const spyOnLogger = sinon.spy(console, 'error');
     // Act
 
+    await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
     // Assert
+    expect(spyOnLogger.lastCall.firstArg).toMatchObject({
+      name: 'db-is-unaccessible',
+      stack: expect.any(String),
+      message: expect.any(String),
+    });
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
@@ -101,7 +123,16 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
+    const spyOnMetric = sinon.spy(metricsExporter, 'fireMetric');
+    const err  = new AppError('db-is-unaccessible', true, 500)
 
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(err)
+    // Act
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+    // Assert
+    expect(spyOnMetric.lastCall.firstArg).toBe('error')
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
   });
@@ -114,21 +145,26 @@ describe('Sensors test', () => {
     // Arrange
     const eventToAdd = getSensorEvent();
     // 💡 TIP: Trigger an error here like the tests above, tag the error as non-trusted
+    const err  = new AppError('db-is-unaccessible', false, 500)
     /*
     Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
     */
-
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(err)
     // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
+
     if (process.exit.restore) {
       process.exit.restore();
     }
-    const listenToProcessExit = sinon.stub(process, 'exit');
-    */
 
+    const listenToProcessExit = sinon.stub(process, 'exit');
+
+    await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
     // Act
 
     // Assert
+    expect(listenToProcessExit.called).toBe(true)
     // 💡 TIP: Check here whether process.exit was called
   });
 
@@ -144,11 +180,13 @@ describe('Sensors test', () => {
 
     // Act
     // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+
+    process.emit(
+     'uncaughtException', {})
+
 
     // Assert
+    expect(listenToProcessExit.called).toBe(true)
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
@@ -173,7 +211,7 @@ describe('Sensors test', () => {
       ${new AppError('error-name', true)} | ${'AppError'}
     `(
       `When throwing $errorTypeDescription, Then it's handled correctly`,
-      async ({ errorInstance }) => {
+      async ({errorInstance}) => {
         // 💡 TIP: This is a typical test, only the thrown error is provided here using the param: errorInstance
         //Arrange
         const eventToAdd = getSensorEvent();
