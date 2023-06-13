@@ -1,5 +1,6 @@
 module.exports = {
   verbose: false,
+  silent: false,
   testMatch: ['**/test/**/*test*.js', '!**/playground/**', '!**/*test-helper*'],
   collectCoverage: false,
   coverageReporters: ['text-summary', 'lcov'],
