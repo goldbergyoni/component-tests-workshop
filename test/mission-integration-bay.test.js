@@ -163,12 +163,12 @@ test('When emitting a new event and the notification service replies with 500 er
       `/notification/${eventToAdd.notificationCategory}`,
       (payload) => (notificationPayload = payload),
     )
-    .delay(6000)
     .reply(500, undefined);
 
   // Act
   const postResponse = await request(expressApp)
     .post('/sensor-events')
+    .timeout(50)
     .send(eventToAdd);
   const getResponse = await request(expressApp).get(
     `/sensor-events/${postResponse.body.id}`,
