@@ -10,7 +10,8 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const jestOpenAPI = require('jest-openapi').default;
-jestOpenAPI('/Users/danielsegl/node_test_course/component-tests-workshop/src/openapi.json')
+const openApi = require('../src/openapi.json');
+jestOpenAPI(openApi);
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require("sinon");
 const axios = require('axios')
