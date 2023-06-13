@@ -34,6 +34,10 @@ beforeEach(() => {
       success: true,
     })
     .persist();
+
+  nock('https://google.com')
+      .get("/",undefined,undefined)
+      .reply(200,{}).persist();
 });
 
 afterEach(() => {
