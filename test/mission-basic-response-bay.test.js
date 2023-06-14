@@ -11,7 +11,7 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const sinon = require('sinon');
-const SensorsService = require("../src/domain/sensors-service");
+const SensorsService = require('../src/domain/sensors-service');
 
 let expressApp;
 
@@ -38,7 +38,7 @@ const event = {
   color: 'Green',
   weight: 80,
   status: 'active',
-  category: "Kids-Room",
+  category: 'Kids-Room',
 };
 
 describe('Sensors test', () => {
@@ -51,10 +51,12 @@ describe('Sensors test', () => {
   // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
-    const eventToAdd = {...event, category: undefined};
+    const eventToAdd = { ...event, category: undefined };
 
     // Act
-    const response = await request(expressApp).post('/sensor-events').send(eventToAdd);
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     expect(response.status).toBe(400);
@@ -66,7 +68,9 @@ describe('Sensors test', () => {
     // Arrange
 
     // Act
-    const response = await request(expressApp).post('/sensor-events').send(event);
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(event);
 
     // Assert
     expect(response.status).toBe(200);
@@ -78,7 +82,9 @@ describe('Sensors test', () => {
   // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
   test('When inserting a valid event, should be able to retrieve it', async () => {
     // Arrange
-    const {text} = await request(expressApp).post('/sensor-events').send(event);
+    const { text } = await request(expressApp)
+      .post('/sensor-events')
+      .send(event);
     const id = JSON.parse(text).id;
 
     // Act
@@ -96,7 +102,7 @@ describe('Sensors test', () => {
     const response = await request(expressApp).get(`/sensor-events/12222`);
 
     // Assert
-    expect(response.text).toBe("null");
+    expect(response.text).toBe('null');
   });
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
@@ -105,10 +111,14 @@ describe('Sensors test', () => {
   // ✅🚀 TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
     // Arrange
-    sinon.stub(SensorsService.prototype, 'addEvent').rejects(new Error('Error!'));
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new Error('Error!'));
 
     // Act
-    const response = await request(expressApp).post('/sensor-events').send(event);
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(event);
 
     // Assert
     expect(response.status).toBe(500);
