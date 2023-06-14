@@ -5,6 +5,7 @@ const {
   QueueSubscriber,
 } = require('../src/entry-points/sensors-queue-subscriber');
 const MessageQueueClient = require('../src/libraries/message-queue/mq-client');
+const request = require('supertest');
 
 module.exports.startMQSubscriber = async (
   fakeOrReal,
@@ -52,5 +53,13 @@ function getSensorEvent(overrides) {
   return result;
 }
 
+async function assertSensorEvent(expressApp, id, expected) {
+  const response = await request(expressApp).get(`/sensor-events/${id}`);
+
+  expect(response.status).toBe(200);
+  expect(JSON.parse(response.text)).toMatchObject(expected);
+}
+
 module.exports.getShortUnique = getShortUnique;
 module.exports.getSensorEvent = getSensorEvent;
+module.exports.assertSensorEvent = assertSensorEvent;

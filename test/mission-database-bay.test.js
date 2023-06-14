@@ -1,16 +1,10 @@
-// 🏅 Your mission is to create your first integration tests here 💜
-// 🏝 database island
-// ✅ Whenever you see this icon, there's a TASK for you
-// ✅🚀 This symbol represents an advanced task
-// 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
-
 const request = require('supertest');
 const nock = require('nock');
 const {
   startWebServer,
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
-const { getShortUnique, getSensorEvent } = require('./test-helper');
+const { getSensorEvent, assertSensorEvent } = require('./test-helper');
 
 let expressApp;
 
@@ -29,74 +23,127 @@ beforeEach(() => {
   });
 });
 
-describe('Sensors test', () => {
+describe('Database tests', () => {
   // ✅ TASK: Write the following test 👇 to ensure adding an event succeed
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
-    const eventToAdd = {
-      category: 'Home equipment',
-      temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-    };
+    const eventToAdd = getSensorEvent();
 
     // Act
-    // 💡 TIP: use any http client lib like Axios OR supertest
-    // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const postResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
-    // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(postResponse).toMatchObject({ status: 200 });
+    const id = JSON.parse(postResponse.text).id;
+    await assertSensorEvent(expressApp, id, eventToAdd);
   });
 
-  // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
-  // 💡 TIP: The failure is because the field 'reason' is unique. When the test runs for the second time -> This value already exists
-  // 💡 TIP: Write an helper function that create unique and short value, put this at the end of the reason field
-  // 💡 TIP: For the sake of this exercise, this helper can be as simple as just randomize number or use a timestamp
+  test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent();
+    const firstResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
-  // ✅ TASK: In the test above 👆, ensure that 'id' field is also part of the response with the right type
-  // But hey, there is a challenge here: The 'id' is different in every response
-  // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
-  //  https://jestjs.io/docs/en/expect#expectanyconstructor
+    // Act
+    const secondResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
-  // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
-  // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
+    // Assert
+    expect(firstResponse).toMatchObject({ status: 200 });
+    expect(secondResponse).toMatchObject({ status: 409 });
+  });
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
-    // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
-    //  the ID of the added event globally). In this test, query for that ID
-    // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+  test('When querying for event by id, Then the right event is being returned', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent();
+    const postResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+    const id = JSON.parse(postResponse.text).id;
+
+    // Act
+    const response = await request(expressApp).get(`/sensor-events/${id}`);
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(JSON.parse(response.text)).toMatchObject(eventToAdd);
   });
 
-  // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
-  // 💡 TIP: To run a single test only, put the word test.only in front of the test method
-  // 💡 TIP: Other way to run a single test is to run the tests in watch mode - 'npm run test:dev',
-  //  then within the CLI type "t", now type your desired test name
+  test('When adding an event without temperature, Then the event is not saved', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent({
+      temperature: undefined,
+      category: 'should not be saved',
+    });
 
-  // ✅ TASK: The last step should have failed, the query test 👆 fails when running alone... Why?
-  // 💡 TIP: This is because the first test ('Add sensor event') did not run, so no record added to the DB
-  // 💡 TIP: A test that relies on records from other tests will always be fragile and increase the maintenance complexity
+    // Act
+    const postResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
-  // ✅ TASK: Let's fix the query test above 👆 - Make it pass all the time, even when running alone
-  // 💡 TIP: In the arrange phase, add an event to query for. Don't trust any other test!
+    // Assert
+    expect(postResponse).toMatchObject({ status: 400 });
+    // The category posted from this test should not be saved
+    const response = await request(expressApp).get('/sensor-events');
+    const eventAdded = JSON.parse(response.text).find(
+      (event) => event.category === eventToAdd.category,
+    );
+    expect(eventAdded).toBeUndefined();
+  });
 
-  // ✅ TASK: Test that when a new event is posted to /sensor-events route, the temperature is not specified -> the event is NOT saved to the DB!
-  // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
-  // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
+  test('When deleting an event, Then it is indeed deleted', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent();
+    const postResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+    const id = JSON.parse(postResponse.text).id;
 
-  // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
+    // Act
+    const deleteResponse = await request(expressApp).delete(
+      `/sensor-events/${id}`,
+    );
+
+    // Assert
+    expect(deleteResponse.status).toBe(200);
+    const getResponse = await request(expressApp).get(`/sensor-events/${id}`);
+    expect(getResponse.text).toBe('null');
+  });
 
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
-  test('When adding multiple events, then all of them appear in the result', () => {});
+  test('When adding multiple events, then all of them appear in the result', async () => {
+    // Arrange
+    const event1 = getSensorEvent();
+    const event2 = getSensorEvent();
+    const currentEvents = await request(expressApp).get('/sensor-events');
+    const currentEventsCount = JSON.parse(currentEvents.text).length;
+
+    // Act
+    await request(expressApp).post('/sensor-events').send(event1);
+    await request(expressApp).post('/sensor-events').send(event2);
+    const updatedEvents = await request(expressApp).get('/sensor-events');
+
+    // Assert
+    const updatedEventsCount = JSON.parse(updatedEvents.text).length;
+    expect(updatedEventsCount).toBe(currentEventsCount + 2);
+    // Check that one of the new events is in the result.
+    expect(
+      JSON.parse(updatedEvents.text).find(
+        ({ reason }) => reason === event1.reason,
+      ),
+    ).toMatchObject(event1);
+  });
 
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
