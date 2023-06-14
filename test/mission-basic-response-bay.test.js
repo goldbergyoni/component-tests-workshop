@@ -41,14 +41,11 @@ const event = {
   category: 'Kids-Room',
 };
 
-describe('Sensors test', () => {
-  // ✅ TASK: Run the testing and ensure the the next simplistic test pass
+describe('Basic response tests', () => {
   test('Just checking that testing works on your machine', () => {
     expect('Me boosting my testing knowledge in the workshop').toBeTruthy();
   });
 
-  // ✅ TASK: Test that when a new event is posted to /event route, if category or temperature are not specified -> the API returns HTTP 400
-  // 💡 TIP: Down below, there is an example event schema
   test('When category is not specified, should get http 400 error', async () => {
     // Arrange
     const eventToAdd = { ...event, category: undefined };
@@ -62,8 +59,6 @@ describe('Sensors test', () => {
     expect(response.status).toBe(400);
   });
 
-  // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
-  // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
 
@@ -77,9 +72,6 @@ describe('Sensors test', () => {
     expect(JSON.parse(response.text)).toMatchObject(event);
   });
 
-  // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
-  // 💡 TIP: In the assert phase, query to get the event that was added
-  // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
   test('When inserting a valid event, should be able to retrieve it', async () => {
     // Arrange
     const { text } = await request(expressApp)
@@ -105,10 +97,6 @@ describe('Sensors test', () => {
     expect(response.text).toBe('null');
   });
 
-  // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
-  // 💡 TIP: If it gets too long, extract obvious parts into an external helper
-
-  // ✅🚀 TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
     // Arrange
     sinon

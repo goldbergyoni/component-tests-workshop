@@ -23,7 +23,7 @@ beforeEach(() => {
   });
 });
 
-describe('Sensors test', () => {
+describe('Database tests', () => {
   // ✅ TASK: Write the following test 👇 to ensure adding an event succeed
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
