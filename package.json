@@ -27,6 +27,7 @@
     "node-notifier": "^10.0.1",
     "nodemon": "^2.0.20",
     "npm-check-updates": "^16.6.2",
+    "path": "^0.12.7",
     "pg": "^8.8.0",
     "pg-hstore": "^2.3.4",
     "round-to": "^6.0.0",

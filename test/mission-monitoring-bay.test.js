@@ -28,6 +28,8 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
+  nock.cleanAll()
+  nock('https://google.com').get("/").reply(200)
   nock('http://localhost')
     .post('/notification/default')
     .reply(200, {

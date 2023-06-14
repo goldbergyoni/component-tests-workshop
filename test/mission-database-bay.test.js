@@ -24,9 +24,11 @@ afterAll(async () => {
 
 beforeEach(() => {
   // 📗 Reading exercise: Why is this needed 👇? Read about npm/nock
+  nock.cleanAll()
   nock('http://localhost').get('/notification').reply(200, {
     success: true,
   });
+  nock('https://google.com').get("/").reply(200)
 });
 
 describe('Sensors test', () => {
