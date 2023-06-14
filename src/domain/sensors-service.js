@@ -1,5 +1,6 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry');
+axiosRetry(axios,{retries: 3})
 const sanitizeService = require('../domain/sanitize-service');
 const SensorsDal = require('../data-access/sensors-repository');
 const { AppError } = require('../error-handling');
@@ -22,21 +23,48 @@ class SensorsEventService {
         notificationCategory = 'default';
       }
 
-      try {
-        await axios.post(
-          `http://localhost/notification/${notificationCategory}`,
-          {
-            title: 'Something critical happened',
-            id,
-          },
-        );
-        eventToHandle.notificationSent = true;
-      } catch (error) {
-        eventToHandle.notificationSent = false;
-        console.log(
-          `Don't want to stop because of this notification error ${error}`,
-        );
+      //Dror's retry mechanism
+      const callme = async () => {
+        try {
+          await axios.post(
+              `http://localhost/notification/${notificationCategory}`,
+              {
+                title: 'Something critical happened',
+                id,
+              },
+              {
+                timeout: 2000
+              }
+          );
+          return true;
+        } catch (err) {
+          return false;
+        }
+      };
+
+      eventToHandle.notificationSent = false;
+      for (let i = 0; i < 2; i++) {
+        if (await callme()) {
+          eventToHandle.notificationSent = true;
+        }
       }
+
+      // try {
+      //   await axios.post(
+      //     `http://localhost/notification/${notificationCategory}`,
+      //     {
+      //       title: 'Something critical happened',
+      //       id,
+      //     },
+      //       {timeout: 3000}
+      //   );
+      //   eventToHandle.notificationSent = true;
+      // } catch (error) {
+      //   eventToHandle.notificationSent = false;
+      //   console.log(
+      //     `Don't want to stop because of this notification error ${error}`,
+      //   );
+      // }
     }
 
     const sensorsRepository = new SensorsDal();

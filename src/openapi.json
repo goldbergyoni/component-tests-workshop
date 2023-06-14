@@ -90,6 +90,16 @@
           "500": {
             "description": "Unknown error occured",
             "content": {}
+          },
+          "202": {
+            "description": "Accepted but not logged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Event"
+                }
+              }
+            }
           }
         }
       }
