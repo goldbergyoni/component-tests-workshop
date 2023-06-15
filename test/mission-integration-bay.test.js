@@ -20,7 +20,12 @@ afterAll(async () => {
   await stopWebServer();
 });
 
-beforeEach(() => {});
+beforeEach(() => {
+  nock.cleanAll();
+  nock('http://localhost')
+    .post('/notification/default')
+    .reply(200, { success: true });
+});
 
 afterEach(() => {});
 
@@ -33,12 +38,12 @@ describe('Sensors test', () => {
 
     // 💡 TIP: Uncomment me to make this test fail and realize why
     // // Act
-    // const receivedResponse = await request(expressApp)
-    //   .post('/sensor-events')
-    //   .send(eventToAdd);
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
-    // expect(receivedResponse.status).toBe(200);
+    expect(receivedResponse.status).toBe(200);
   });
 
   // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
@@ -58,6 +63,17 @@ describe('Sensors test', () => {
       notificationCategory: getShortUnique(),
     });
     let notificationPayload;
+    const scope = nock('http://localhost')
+      .post(
+        `/notification/${eventToAdd.notificationCategory}`,
+        (payload) => (notificationPayload = payload),
+      )
+      .reply(200, {
+        success: true,
+        body: {
+          title: 'Something critical happened',
+        },
+      });
 
     // 💡 TIP: You need to define here a new nock, so you can listen to it and ensure that the call did happen
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
@@ -70,10 +86,18 @@ describe('Sensors test', () => {
       */
 
     // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
     // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
     // You may call whether this URL was called using - scope.isDone()
+    expect(scope.isDone()).toBe(true);
+    expect(notificationPayload).toMatchObject(
+      {
+        id: expect.any(Number),
+        title: "Something critical happened",
+      }
+    );
   });
 
   // ✅ TASK: In the test above that checks for notification, ensure that the request body was valid. Otherwise, our code
@@ -89,12 +113,20 @@ describe('Sensors test', () => {
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
     // 💡 TIP: Set here a nock that replies with 500: nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
+    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
+      .delay(2)
+      .reply(500)
+    const addedEventResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Act
+    const response = await request(expressApp).get(`/sensor-events/${addedEventResponse.body.id}`);
 
     // Assert
     // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
     // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
+    expect(response.body).toMatchObject({
+      ...eventToAdd
+    });
   });
 });
 
