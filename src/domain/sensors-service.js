@@ -22,20 +22,30 @@ class SensorsEventService {
         notificationCategory = 'default';
       }
 
-      try {
-        await axios.post(
-          `http://localhost/notification/${notificationCategory}`,
-          {
-            title: 'Something critical happened',
-            id,
-          },
-        );
-        eventToHandle.notificationSent = true;
-      } catch (error) {
-        eventToHandle.notificationSent = false;
-        console.log(
-          `Don't want to stop because of this notification error ${error}`,
-        );
+      // Dror's retry mechanism
+      const callme = async () => {
+        try {
+          await axios.post(
+            `http://localhost/notification/${notificationCategory}`,
+            {
+              title: 'Something critical happened',
+              id,
+            },
+            {
+              timeout: 30000
+            }
+          );
+          return true;
+        } catch (err) {
+          return false;
+        }
+      };
+
+      eventToHandle.notificationSent = false;
+      for (let i = 0; i < 3; i++) {
+        if (await callme()) {
+          eventToHandle.notificationSent = true;
+        }
       }
     }
 
