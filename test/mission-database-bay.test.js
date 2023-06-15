@@ -220,13 +220,9 @@ describe('Sensors test', () => {
       weight: 80,
       status: 'active',
     };
-    await request(expressApp)
-        .post('/sensor-events')
-        .send(eventToAdd1);
-    await request(expressApp)
-        .post('/sensor-events')
-        .send(eventToAdd2);
-// Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd1);
+    await request(expressApp).post('/sensor-events').send(eventToAdd2);
+    // Act
     const potentiallyEvents = await request(expressApp).get(
       `/sensor-events/${category}/reason`,
     );
