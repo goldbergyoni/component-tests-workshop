@@ -156,7 +156,7 @@ describe('Sensors test', () => {
   // ✅🚀  TASK: Test the following
   test('When querying for a non-existing event, then get http status 404', async () => {
     const nonExistingEvent = await request(expressApp).get(
-      `/sensor-events/${getUniqueValue()}`,
+      `/sensor-events/${getUniqueValue}`,
     );
 
     expect(nonExistingEvent).toMatchObject({
