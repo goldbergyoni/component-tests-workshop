@@ -16,7 +16,6 @@ class SensorsEventService {
     }
 
     // logic
-    // If temp is very high or the kids room and high enough, generate a notification
     if (temperature > 50 || (category === 'kids-room' && temperature > 30)) {
       const id = Math.ceil(Math.random() * 1000);
       if (!notificationCategory) {
@@ -24,7 +23,6 @@ class SensorsEventService {
       }
 
       try {
-        // Call a microservice
         await axios.post(
           `http://localhost/notification/${notificationCategory}`,
           {

@@ -57,7 +57,6 @@ function defineAllRoutes(expressApp) {
       const response = await sensorsService.addEvent(req.body);
       let returnedHTTPStatus = 200;
       if (response.notificationSent === false) {
-        // Processed but maybe not sucessfully?
         returnedHTTPStatus = 202;
       }
 
