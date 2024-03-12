@@ -47,8 +47,19 @@ describe('Sensors test', () => {
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
+    const addEventResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(addEventResponse).toMatchObject(
+      {body: {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active'
+  }});
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
