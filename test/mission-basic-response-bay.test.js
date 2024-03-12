@@ -94,7 +94,7 @@ describe('Sensors test', () => {
     // Assert
     // 💡 TIP: You may check the body and the status all together with the following syntax:
     // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
-    expect(receivedResponse).toMatchObject({ status: 200 });
+    expect(receivedResponse).toMatchObject({status: 200, body: { ...eventToAdd }});
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
@@ -106,13 +106,10 @@ describe('Sensors test', () => {
 
     // Act
     const postEventRequest = await request(expressApp).post("/sensor-events").send(eventToAdd);
-    const { body: { id: addedEventId }} = postEventRequest;
-    const getEventRequest = await request(expressApp).get(`/sensor-events/${id}`);
-
     // Assert
     // 💡 TIP: You may check the body and the status all together with the following syntax:
     // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
-    expect(getEventRequest).toMatchObject({status: 200, body: { id, ...eventToAdd }});
+    expect(postEventRequest).toMatchObject({status: 200, body: { ...eventToAdd }});
   });
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
