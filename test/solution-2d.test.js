@@ -184,7 +184,7 @@ describe('Sensors test', () => {
     const hopefullyNonExistingEvent = await request(expressApp).get(
       `/sensor-events/${toBeDeletedEventId}`,
     );
-    expect(hopefullyNonExistingEvent.body).toBeNull();
+    expect(hopefullyNonExistingEvent.status).toBe(404);
   });
 
   // ✅🚀 TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues

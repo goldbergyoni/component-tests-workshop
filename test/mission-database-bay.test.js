@@ -4,6 +4,9 @@
 // ✅🚀 This symbol represents an advanced task
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
+const matchers = require('jest-extended');
+expect.extend(matchers);
+
 const request = require('supertest');
 const nock = require('nock');
 const {
@@ -103,18 +106,87 @@ describe('Sensors test', () => {
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
   // ✅🚀  TASK: Test the following
-  test('When querying for a non-existing event, then get http status 404', () => {});
+  test('When querying for a non-existing event, then get http status 404', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    // Act
+    const validPostResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const validGetResponse = await request(expressApp).get(`/sensor-events/${validPostResponse.body.id}`);
+    const invalidGetResponse = await request(expressApp).get(`/sensor-events/0`);
+
+    // Assert
+    expect(validGetResponse.status).toBe(200);
+    expect(invalidGetResponse.status).toBe(404);
+  });
   // 💡 TIP: How could you be sure that an item does not exist? 🤔
 
   // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
   // Check that when adding two events at the same time, both are saved successfully
   // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
   // 💡 TIP: Promise.all function might be helpful to parallelize the requests
+  test('When multiple events are added simultaneously, then there should be no concurrency and unique-key issues', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    // Act
+    const postResponses = await Promise.all([
+      await request(expressApp).post("/sensor-events").send(eventToAdd),
+      await request(expressApp).post("/sensor-events").send(eventToAdd),
+      await request(expressApp).post("/sensor-events").send(eventToAdd)
+    ]);
+
+    
+    // Assert
+    const getResponses = await Promise.all(postResponses.map(async (postResponse) => {
+      return await request(expressApp).get(`/sensor-events/${postResponse.body.id}`);
+    }));
+    
+    getResponses.forEach((getResponse) => {
+      expect(getResponse).toMatchObject({
+        status: 200,
+        body: expect.any(Object), // TODO: expand assertion
+      });
+    });
+  });
 
   // ✅🚀 When adding a valid event, we get back some fields with dynamic values: createdAt, updatedAt, id
   //  Check that these fields are not null and have the right schema
   // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
   //  https://jestjs.io/docs/en/expect#expectanyconstructor
+  test('When adding a valid event, we get back some fields with dynamic values: createdAt, updatedAt, id', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    // Act
+    const response = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    // Assert
+    expect(response.body).toMatchObject({
+      ...eventToAdd,
+      id: expect.any(Number),
+      createdAt: expect.toBeDateString(),
+      updatedAt: expect.toBeDateString(),
+    });
+  });
 
   // ✅🚀 TASK: Although we don't clean-up the DB during the tests, it's useful to clean-up in the end. Let's delete the data tables after all the tests
   // 💡 TIP: Choose the right hook thoughtfully and remember that two test files might get executed at the same time
@@ -123,6 +195,28 @@ describe('Sensors test', () => {
   // ✅🚀  TASK: Test that querying for /sensor-events route (i.e. get all) and sorting by the field 'temperature', the results are indeed sorted
   // 💡 TIP: The following route allows sorting by specific field: /sensor-events/:category/:sortBy
   // 💡 TIP: Each test should be independent and might run alone without others, don't count on data (events) from other tests
+  test('When querying for /sensor-events route and sorting by the field `temperature`, the results are indeed sorted', async () => {
+    // Arrange
+    const eventToAdd = {
+      category: 'Test',
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+    };
+
+    // Act
+    await Promise.all([
+      await request(expressApp).post("/sensor-events").send({...eventToAdd, temperature: parseInt(Math.random() * 100)}),
+      await request(expressApp).post("/sensor-events").send({...eventToAdd, temperature: parseInt(Math.random() * 100)}),
+      await request(expressApp).post("/sensor-events").send({...eventToAdd, temperature: parseInt(Math.random() * 100)}),
+    ]);
+    const responses = await request(expressApp).get(`/sensor-events/${eventToAdd.category}/temperature`);
+    
+    // Assert
+    const temperatures = responses.body.map(response => response.temperature);
+    expect(temperatures).toBe(temperatures.sort())
+  });
 
   // ✅🚀  TASK: Test that querying for /sensor-events route (i.e. get all) and sorting by the field 'temperature', the results are indeed sorted
   // 💡 TIP: The following route allows sorting by specific field: /sensor-events/:category/:sortBy
