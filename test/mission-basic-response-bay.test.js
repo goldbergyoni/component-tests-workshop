@@ -84,7 +84,7 @@ describe('Sensors test', () => {
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
-    const eventToAdd = getSensorEvent({ temperature: undefined });
+    const eventToAdd = getSensorEvent();
 
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
