@@ -111,7 +111,22 @@ describe('Sensors test', () => {
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
   // 💡 TIP: Checking the number of records in the response might be fragile as there other processes and tests
   //  that add data. Consider sampling for some records to get partial confidence that it works
-  test('When adding multiple events, then all of them appear in the result', () => {});
+  test('When adding multiple events, then all of them appear in the result', async () => {
+    // Arrange
+    const numberOfEvents = 10;
+    const eventsToAdd = Array(numberOfEvents).fill(null).map(() => createEvent());
+    
+    // Act
+    const addEventResponses = await Promise.all(eventsToAdd.map(eventToAdd => request(expressApp).post('/sensor-events').send(eventToAdd)));
+
+    // Assert
+    const getAllResponse = await request(expressApp).get('/sensor-events');
+    expect(getAllResponse.status).toBe(200);
+    addEventResponses.forEach(addEventResponse => {
+      // there's probably a Jest matcher for this ¯\_(ツ)_/¯
+      expect(getAllResponse.body.some(event => event.id === addEventResponse.body.id)).toBe(true);
+    });
+  });
 
   // ✅ TASK: Spread your tests across multiple files, let the test runner invoke tests in multiple processes - Ensure all pass
   // 💡 TIP: You might face port collision where two APIs instances try to open the same port
