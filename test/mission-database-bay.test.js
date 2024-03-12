@@ -6,6 +6,7 @@
 
 const request = require('supertest');
 const nock = require('nock');
+const crypto = require('node:crypto');
 const {
   startWebServer,
   stopWebServer,
@@ -34,21 +35,35 @@ describe('Sensors test', () => {
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
-    const eventToAdd = {
-      category: 'Home equipment',
-      temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-    };
+    const eventToAdd = createEvent()
 
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject(
+      {
+        "category": "Home equipment",
+        "color": "Green",
+        "createdAt": expect.any(String),
+        "id": expect.any(Number),
+        "latitude": null,
+        "longtitude": null,
+        "notificationCategory": null,
+        "notificationSent": null,
+        reason: eventToAdd.reason,
+        "status": "active",
+        "temperature": 20,
+        "updatedAt": expect.any(String),
+        "weight": 80,
+      }
+    );
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
@@ -103,18 +118,67 @@ describe('Sensors test', () => {
   // 💡 TIP: Use the flag 'jest --maxWorkers=<num>'. Assign zero for max value of some specific number greater than 1
 
   // ✅🚀  TASK: Test the following
-  test('When querying for a non-existing event, then get http status 404', () => {});
+  test('When querying for a non-existing event, then get http status 404', async () => {
+    // Arrange
+    const randomEventId = crypto.randomInt(1e9);
+    await request(expressApp).delete(`/sensor-events/${randomEventId}`); // make sure the event doesn't already exist.
+
+    // Act
+    const response = (await request(expressApp).get(`/sensor-events/${randomEventId}`));
+
+    // Assert
+    expect(response.status).toBe(404);
+  });
   // 💡 TIP: How could you be sure that an item does not exist? 🤔
 
   // ✅🚀  TASK: Let's ensure that two new events can be added at the same time - This ensure there are no concurrency and unique-key issues
   // Check that when adding two events at the same time, both are saved successfully
   // 💡 TIP: To check something was indeed saved, it's not enough to rely on the response - Ensure that it is retrievable
   // 💡 TIP: Promise.all function might be helpful to parallelize the requests
+  test('When adding multiple events, then all of them are retrievable', async () => {
+    // Arrange
+    const numberOfEvents = 10
+    const eventsToAdd = Array(numberOfEvents).fill(null).map(() => createEvent());
+
+    // Act
+    const eventAddedResponses = await Promise.all(eventsToAdd.map(eventToAdd => request(expressApp).post('/sensor-events').send(eventToAdd)));
+
+    // Assert
+    await Promise.all(eventAddedResponses.map(async eventAddedResponse => {
+      // check that the add event response was successful
+      expect(eventAddedResponse.status).toBe(200);
+      
+      // check the added event is retrievable
+      const eventId = eventAddedResponse.body.id;
+      const getEventResponse = await request(expressApp).get(`/sensor-events/${eventId}`);
+      expect(getEventResponse.status).toBe(200);
+      expect(getEventResponse.body.id).toBe(eventId);
+    }))
+  })
 
   // ✅🚀 When adding a valid event, we get back some fields with dynamic values: createdAt, updatedAt, id
   //  Check that these fields are not null and have the right schema
   // 💡 TIP: Jest has a dedicated matcher for unknown values, read about:
   //  https://jestjs.io/docs/en/expect#expectanyconstructor
+  test('When adding a valid event, then createdAt, updatedAt, id fields should have the correct schema', async () => {
+    // Arrange
+    const eventToAdd = createEvent()
+
+    // Act
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    expect(response.body).toMatchObject({
+      "createdAt": expect.any(String),
+      "id": expect.any(Number),
+      "updatedAt": expect.any(String),
+    });
+    // check createdAt and updatedAt fields are valid dates
+    expect(Date.parse(response.body.createdAt)).not.toBeNaN();
+    expect(Date.parse(response.body.updatedAt)).not.toBeNaN();
+  });
 
   // ✅🚀 TASK: Although we don't clean-up the DB during the tests, it's useful to clean-up in the end. Let's delete the data tables after all the tests
   // 💡 TIP: Choose the right hook thoughtfully and remember that two test files might get executed at the same time
@@ -131,4 +195,36 @@ describe('Sensors test', () => {
   // ✅🚀  TASK: Test when a sensor event is deleted, the code is not mistakenly deleting data that was not
   // supposed to be deleted
   // 💡 TIP: You may need to add more than one event to achieve this
+  test('When a sensor event is deleted, then only the specified event is deleted', async () => {
+    // Arrange
+    const eventToAdd1 = createEvent();
+    const eventToAdd2 = createEvent();
+    const addEventResponse1 = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd1);
+    const addEventResponse2 = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd2);
+
+    // Act
+    await request(expressApp).delete(`/sensor-events/${addEventResponse1.body.id}`);
+
+    // Assert
+    const retrieveEvent1Response = await request(expressApp).get(`/sensor-events/${addEventResponse1.body.id}`);
+    const retrieveEvent2Response = await request(expressApp).get(`/sensor-events/${addEventResponse2.body.id}`);
+    expect(retrieveEvent1Response.status).toBe(404);
+    expect(retrieveEvent2Response.status).toBe(200);
+  });
 });
+
+function createEvent(overrides) {
+  return {
+    category: 'Home equipment',
+    temperature: 20,
+    reason: `Thermostat-failed__${crypto.randomUUID()}`,
+    color: 'Green',
+    weight: 80,
+    status: 'active',
+    ...overrides,
+  };
+}
