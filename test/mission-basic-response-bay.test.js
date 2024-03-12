@@ -97,21 +97,6 @@ describe('Sensors test', () => {
     expect(receivedResponse).toMatchObject({status: 200, body: { ...eventToAdd }});
   });
 
-  // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
-  // 💡 TIP: In the assert phase, query to get the event that was added
-  // 💡 TIP: Whenever possible, use the public API for verification (not direct DB access)
-  test('When inserting a valid event, should get successful response', async () => {
-    // Arrange
-    const eventToAdd = getSensorEvent();
-
-    // Act
-    const postEventRequest = await request(expressApp).post("/sensor-events").send(eventToAdd);
-    // Assert
-    // 💡 TIP: You may check the body and the status all together with the following syntax:
-    // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
-    expect(postEventRequest).toMatchObject({status: 200, body: { ...eventToAdd }});
-  });
-
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
 
