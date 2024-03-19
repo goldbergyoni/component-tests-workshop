@@ -17,10 +17,14 @@ let expressApp;
 
 beforeAll(async () => {
   expressApp = await startWebServer();
+  nock.emitter.on('no match', req => {
+    console.warn(`Unmatched request by nock: Method: ${req.method} Path: ${(req.path)}`)
+  })
 });
 
 afterAll(async () => {
   await stopWebServer();
+  nock.cleanAll();
 });
 
 beforeEach(() => { });
@@ -107,7 +111,7 @@ describe('Sensors test', () => {
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
     // 💡 TIP: Set here a nock that replies with 500: nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
-  
+    nock.enableNetConnect("127.0.0.1")
     nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(500)
     
     // Act
