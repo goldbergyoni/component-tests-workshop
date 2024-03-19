@@ -214,7 +214,7 @@ test('When emitting event and the notification service fails once, then a notifi
   });
 
   nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(500)
-  nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, { success: true })
+  const retryScope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, { success: true })
   
   // Act
   const addEventResult = await request(expressApp)
@@ -231,6 +231,7 @@ test('When emitting event and the notification service fails once, then a notifi
   expect(getEventResult).toMatchObject({
     status: 200, body: addEventResult.body
   });
+  expect(retryScope.isDone())
 });
 
 // ✅🚀 TASK: Ensure that if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue
