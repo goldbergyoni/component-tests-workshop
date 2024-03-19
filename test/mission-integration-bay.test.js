@@ -98,12 +98,17 @@ describe('Sensors test', () => {
   });
 });
 
-// ✅🚀 There is some naughty code that is issuing HTTP requests without our awareness! Find it and nock it!
+// ✅ There is some naughty code that is issuing HTTP requests without our awareness! Find it and nock it!
 // 💡 TIP: When approaching real HTTP requests during testing, this might incur costs, performance issues and mostly flakiness
 // 💡 TIP: Nock allows you to prevent this using the command nock.enableNetConnect(). Just make sure to allow 127.0.0.1 calls since this is the internal API
 
-// ✅🚀 When this tets suite (file) is done, ensure to clean-up and enable network requests - Maybe other test files do wish to approach external resources
+// ✅ When this tets suite (file) is done, ensure to clean-up and enable network requests - Maybe other test files do wish to approach external resources
 // 💡 TIP: Nock intercepts any calls within the same process. Anything that is not reset here will affect the next tests
+
+// ✅🚀 Some of the code HTTP calls outside might not match the existing defined nocks, in this case nock won't intercept these calls
+// This will lead to unplanned flows, or failures that are hard to understand. Fix this by emitting a colorful warning to the console when there is no matching nock
+// Simulate this situation by adding a new HTTP call in the code and see how it behaves
+// 💡 TIP: nock exposes an event nock.emitter.on('no match', req => {})
 
 // ✅🚀  TASK: Write the same test like above 👆, but this time when the response arrives with some delay
 // 💡 TIP: Some code contains races between multiple tasks (e.g. Promise.race), for example when waiting for the request for sometime
@@ -116,7 +121,7 @@ describe('Sensors test', () => {
 // Here's nock syntax: nock(url).post(path).delay(timeInMillisecond). Choose delay value that is just a bit bigger than Axios default
 
 // ✅🚀 TASK: Write the following test below
-// 💡 TIP: This test is about a hot Microservice concept: Circuit-breaker (retrying requests)
+// 💡 TIP: This test is about an important Microservice concept: resiliency (retrying requests)
 test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', () => {
   // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
   // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
