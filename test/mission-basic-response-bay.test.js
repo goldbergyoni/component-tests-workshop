@@ -12,6 +12,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
+const SensorsRepository = require('../src/data-access/sensors-repository');
 
 let expressApp;
 
@@ -48,34 +49,49 @@ describe('Sensors test', () => {
     // Arrange
     const eventToAdd = {
       temperature: 20,
+      name: 'Thermostat-temperature', // This must be unique
       color: 'Green',
       weight: 80,
       status: 'active',
-      category: 'Kids-Room',
-      // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
+      category: undefined
     };
 
     // Act
 
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
-
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
     // Assert
 
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
+    expect(receivedResult.status).toBe(400);
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      reason: `Thermostat-temperature ${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: `category-${getShortUnique()}}`,
+      notificationCategory: 'default',
+    };
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const receivedResult = await request(expressApp)
+    .post('/sensor-events')
+    .send(eventToAdd);
     // Assert
     // 💡 TIP: You may check the body and the status all together with the following syntax:
-    // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
+    expect(receivedResult).toMatchObject({status: 200, body: eventToAdd});
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
@@ -93,8 +109,25 @@ describe('Sensors test', () => {
     // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
     //  https://sinonjs.org/releases/latest/stubs/
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
+    const eventToAdd = {
+      temperature: 20,
+      reason: `Thermostat-temperature ${getShortUnique()}`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: `category-${getShortUnique()}}`,
+      notificationCategory: 'default',
+    };
+    sinon
+    .stub(SensorsRepository.prototype, 'addSensorsEvent')
+    .rejects(new Error('foo'));
+
     // Act
+    const receivedResult = await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
     // Assert
+    expect(receivedResult.status).toBe(500);
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
