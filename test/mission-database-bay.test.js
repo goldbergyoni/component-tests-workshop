@@ -13,6 +13,7 @@ const {
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 
 let expressApp;
+let eventId;
 
 beforeAll(async () => {
   expressApp = await startWebServer();
@@ -34,14 +35,19 @@ describe('Sensors test', () => {
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
-    const eventToAdd = {
-      category: 'Home equipment',
-      temperature: 20,
-      reason: `Thermostat-failed`, // This must be unique
-      color: 'Green',
-      weight: 80,
-      status: 'active',
-    };
+    const eventToAdd = getSensorEvent();
+
+    // Act
+    const receivedResponse = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    const expectedResult = eventToAdd;
+    expectedResult.id = expect.any(Number);
+    expect(receivedResponse).toMatchObject({
+        status: 200,
+        body: expectedResult,
+    });
+    eventId = receivedResponse.body.id;
 
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
@@ -65,14 +71,43 @@ describe('Sensors test', () => {
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
   // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
 
+
+  test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent();
+
+    // Act
+    const receivedResponse1 = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    const receivedResponse2 = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(receivedResponse1).toMatchObject({
+        status: 200,
+        body: eventToAdd,
+    });
+
+    expect(receivedResponse2.status).toBe(409);
+});
+
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
-    // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
-    //  the ID of the added event globally). In this test, query for that ID
-    // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+  test('When querying for event by id, Then the right event is being returned', async () => {
+  // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
+        //  the ID of the added event globally). In this test, query for that ID
+        // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+
+        // Act
+        const retrieveResponse = await request(expressApp).get(`/sensor-events/${eventId}`);
+
+        // Assert
+        expect(retrieveResponse).toMatchObject({
+          status: 200,
+          body: { id: eventId },
+      });
+    
   });
 
   // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
@@ -91,6 +126,35 @@ describe('Sensors test', () => {
   // 💡 TIP: Testing the response is not enough, the adequate state (e.g. DB) should also satisfy the expectation
   // 💡 TIP: In the assert phase, query to get the event that was (not) added - Ensure the response is empty
 
+
+  test('When adding a invalid event,  the event is NOT saved to the DB', async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent({category: undefined})
+
+      // Act
+    receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+      // 💡 TIP: use any http client lib like Axios OR supertest
+      // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+  
+      // Assert
+    expect(receivedResponse.status).toBe(400);
+
+    await request(expressApp).get(`/sensor-events/undefined/status`)
+    .expect(res => {
+        expect(res).toMatchObject({
+            status: 200,
+            body: [],
+        });
+    });
+
+    // Act
+    // 💡 TIP: use any http client lib like Axios OR supertest
+    // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+
+    // Assert
+    // 💡 TIP: Check not only the HTTP status bot also the body
+  });
   // ✅ TASK: Test that when an event is deleted, then its indeed not existing anymore
 
   // ✅ TASK: Write the following test below 👇 to check that the app is able to return all records
