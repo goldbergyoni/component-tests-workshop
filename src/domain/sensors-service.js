@@ -67,7 +67,7 @@ class SensorsEventService {
   }
 
   async getSensorById(id) {
-    return await new SensorsDal().getSensorById(id);
+    return await new SensorsDal().getSensorById(Number(id));
   }
 
   async deleteSensorById(id) {
