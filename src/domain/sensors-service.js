@@ -53,6 +53,7 @@ class SensorsEventService {
       }
     }
 
+    // Init data access layer object and store
     const sensorsRepository = new SensorsDal();
     const fullEventInfo = await sensorsRepository.addSensorsEvent(
       eventToHandle,
