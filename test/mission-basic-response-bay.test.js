@@ -51,17 +51,17 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
-      category: 'Kids-Room',
+      category: undefined,
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
 
     // Act
-
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
 
     // Assert
-
+    expect(receivedResponse.status).toBe(400);
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
   });
