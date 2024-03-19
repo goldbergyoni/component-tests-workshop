@@ -3,6 +3,9 @@
 // ✅🚀 This symbol represents an advanced task
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
+const { default: axios } = require('axios');
+const chalk = require("chalk");
+const jestOpenAPI = require('jest-openapi').default;
 const request = require('supertest');
 const nock = require('nock');
 const {
@@ -10,10 +13,13 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
+
 let expressApp;
+let axiosTimeout;
 
 beforeAll(async () => {
   expressApp = await startWebServer();
+  axiosTimeout = axios.defaults.timeout;
 });
 
 afterAll(async () => {
@@ -22,23 +28,37 @@ afterAll(async () => {
 
 beforeEach(() => {});
 
-afterEach(() => {});
+afterEach(() => {
+  axios.defaults.timeout = axiosTimeout;
+});
+
+nock.enableNetConnect((host) => {
+  const isInternalService = host.match(/^(127.0.0.1|localhost)/);
+  if (!isInternalService) {
+    console.log(chalk.yellowBright.bold(`Warning! Test attempted to make an external request to "${host}.`));
+  }
+  return isInternalService;
+});
+
+nock.emitter.on('no match', req => {
+  console.log(chalk.yellowBright.bold(`Warning! No matching nock request for "${req.method} ${req.path}".`));
+});
 
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?
   // 💡 TIP: When setting high temperature event, then a notification is sent with HTTP request. This URL/Service are not available on your local machine
   test('When adding a valid event, Then should get successful confirmation', async () => {
     // Arrange
-    const eventToAdd = getSensorEvent({ temperature: 60 });
+    const eventToAdd = getSensorEvent({ temperature: 10 });
 
     // 💡 TIP: Uncomment me to make this test fail and realize why
-    // // Act
-    // const receivedResponse = await request(expressApp)
-    //   .post('/sensor-events')
-    //   .send(eventToAdd);
+    // Act
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
-    // expect(receivedResponse.status).toBe(200);
+    expect(receivedResponse.status).toBe(200);
   });
 
   // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
@@ -119,13 +139,44 @@ describe('Sensors test', () => {
 // the remote service does not reply at all, we are still able to progress and save the event
 // 💡 TIP: Nock is capable of simulating timeouts without waiting for the actual timeout
 // Here's nock syntax: nock(url).post(path).delay(timeInMillisecond). Choose delay value that is just a bit bigger than Axios default
+test('When emitting a new event and the notification service times out, then the added event was still saved successfully', async () => {
+  // Arrange
+  axios.defaults.timeout = 1;
+  const eventToAdd = getSensorEvent({ temperature: 80 });
+  const delayInMillisecond = 1000;
+  nock('http://localhost')
+    .post('/notification/default')
+    .delay(delayInMillisecond)
+    .reply(200, { success: true });
+
+  // Act
+  const receivedResponse = await request(expressApp)
+    .post('/sensor-events')
+    .send(eventToAdd);
+
+  // Assert
+  expect(receivedResponse.status).toBe(202);
+});
 
 // ✅🚀 TASK: Write the following test below
 // 💡 TIP: This test is about an important Microservice concept: resiliency (retrying requests)
-test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', () => {
+test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
   // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
   // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
   // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
+
+  // Arrange
+  const eventToAdd = getSensorEvent({ temperature: 80 });
+  nock('http://localhost').post('/notification/default').times(1).reply(500);
+  nock('http://localhost').post('/notification/default').reply(200, { success: true });
+
+  // Act
+  const receivedResponse = await request(expressApp)
+    .post('/sensor-events')
+    .send(eventToAdd);
+
+  // Assert
+  expect(receivedResponse.status).toBe(200);
 });
 
 // ✅🚀 TASK: Ensure that if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue
@@ -133,3 +184,22 @@ test('When emitting event and the notification service fails once, then a notifi
 // 💡 TIP: Use jest-open-api tool to help with this mission:
 // https://www.npmjs.com/package/jest-openapi
 //💡 TIP: If you want to apply this to all tests, put this assertion as axios extension
+
+const openapiSpec = require("../src/openapi.json");
+jestOpenAPI(openapiSpec);
+
+describe('OpenAPI spec', () => {
+  test("When calling 'POST /sensor-events', the response should match the OpenAPI spec", async () => {
+    // Arrange
+    const eventToAdd = getSensorEvent({ temperature: 10 });
+
+    // Act
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    expect(receivedResponse.status).toEqual(200);
+    expect(receivedResponse).toSatisfyApiSpec();
+  });
+});
