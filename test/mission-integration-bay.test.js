@@ -217,7 +217,7 @@ test('When emitting event and the notification service fails once, then a notifi
     notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
   });
 
-  nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(500)
+  nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).times(1).reply(500)
   const retryScope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, { success: true })
   
   // Act
