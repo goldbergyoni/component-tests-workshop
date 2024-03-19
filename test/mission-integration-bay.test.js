@@ -14,7 +14,8 @@ const { getShortUnique, getSensorEvent } = require('./test-helper');
 let expressApp;
 
 // Load an OpenAPI file (YAML or JSON) into this plugin
-jestOpenAPI('/Users/ryan.solomon/code/component-tests-workshop/src/openapi.json');
+const openApiSpec = require('../src/openapi.json')
+jestOpenAPI(openApiSpec);
 
 beforeAll(async () => {
   expressApp = await startWebServer();
