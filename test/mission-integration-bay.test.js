@@ -10,6 +10,11 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
+const jestOpenAPI = require('jest-openapi').default;
+const path = require('node:path');
+
+jestOpenAPI(path.resolve("./src/openapi.json"));
+
 let expressApp;
 
 beforeAll(async () => {
@@ -184,3 +189,19 @@ test('When emitting event and the notification service fails once, then a notifi
 // 💡 TIP: Use jest-open-api tool to help with this mission:
 // https://www.npmjs.com/package/jest-openapi
 //💡 TIP: If you want to apply this to all tests, put this assertion as axios extension
+test('When the response is not aligned with the OpenAPI specification, the test should fail', async () => {
+  // Arrange
+  const eventToAdd = getSensorEvent({
+    temperature: 80, //💡 TIP: We need high temperature to trigger notification
+    notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+  });
+  nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, { success: true });
+
+  // Act
+  const addEventResponse = await request(expressApp)
+    .post('/sensor-events')
+    .send(eventToAdd);
+
+  // Assert
+  expect(addEventResponse).toSatisfyApiSpec()
+});
