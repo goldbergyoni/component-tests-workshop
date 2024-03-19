@@ -5,6 +5,20 @@ const SensorsDal = require('../data-access/sensors-repository');
 const { AppError } = require('../error-handling');
 const MessageQueueClient = require('../libraries/message-queue/mq-client');
 
+axiosRetry(axios, {
+  retries: 4,
+
+  onRetry: (count, error) => {
+    console.log('Retrying request', count);
+  },
+  retryCondition: (request) => {
+    if (request.response.status >= 500) {
+      return true;
+    }
+    return false;
+  },
+});
+
 class SensorsEventService {
   async addEvent(eventToHandle) {
     let { temperature, category, notificationCategory } = eventToHandle;
