@@ -30,6 +30,8 @@ beforeEach(() => {
 });
 
 describe('Sensors test', () => {
+
+  let globalEventIdFromTest1;
   // ✅ TASK: Write the following test 👇 to ensure adding an event succeed
   // 💡 TIP: The event schema is already defined below
   test('When adding a valid event, Then should get successful confirmation', async () => {
@@ -41,14 +43,20 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
+      reason: `Thermostat ${getShortUnique()}`,
     };
 
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
-
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
     // Assert
     // 💡 TIP: Check not only the HTTP status bot also the body
+    expect(receivedResponse).toMatchObject({status: 200, body: {
+      ...eventToAdd,
+      id: expect.any(Number)
+    }});
+    globalEventIdFromTest1 = receivedResponse.body.id;
   });
 
   // ✅ TASK: Run the test above twice, it fails, ah? Let's fix!
@@ -63,16 +71,58 @@ describe('Sensors test', () => {
 
   // ✅ TASK: Let's test that the system indeed enforces the 'reason' field uniqueness by writing this test below 👇
   // 💡 TIP: This test probably demands two POST calls, you can use the same JSON payload twice
-  // test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409');
+  test('When a record exist with a specific reason and trying to add a second one, then it fails with status 409', async () => {
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      reason: `Thermostat ${getShortUnique()}`,
+    };
+    const receivedResponse1 = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    expect(receivedResponse1).toMatchObject({status: 200, body: {
+        ...eventToAdd,
+        id: expect.any(Number)
+      }});
+    const receivedResponse2 = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    expect(receivedResponse2).toMatchObject({status: 409});
+  });
 
   // ✅ TASK: Let's write the test below 👇 that checks that querying by ID works. For now, temporarily please query for the event that
   // was added using the first test above 👆.
   // 💡 TIP: This is not the recommended technique (reusing records from previous tests), we do this to understand
   //  The consequences
-  test('When querying for event by id, Then the right event is being returned', () => {
+  test.only('When querying for event by id, Then the right event is being returned', async () => {
     // 💡 TIP: At first, query for the event that was added in the first test (In the first test above, store
     //  the ID of the added event globally). In this test, query for that ID
     // 💡 TIP: This is the GET sensor URL: await request(expressApp).get(`/sensor-events/${id}`,
+    const eventToAdd = {
+      category: 'Home equipment',
+      temperature: 20,
+      reason: `Thermostat-failed`, // This must be unique
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      reason: `Thermostat ${getShortUnique()}`,
+    };
+    const receivedResponse = await request(expressApp).post("/sensor-events").send(eventToAdd);
+    expect(receivedResponse).toMatchObject({status: 200, body: {
+        ...eventToAdd,
+        id: expect.any(Number)
+      }});
+    const getResponse = await request(expressApp).get(`/sensor-events/${receivedResponse.body.id}`);
+    expect(getResponse).toMatchObject({status: 200, body: {
+        ...eventToAdd,
+        id: receivedResponse.body.id
+      }});
+
+    // const getResponse = await request(expressApp).get(`/sensor-events/${globalEventIdFromTest1}`);
+    // expect(getResponse).toMatchObject({status: 200, body: {
+    //     id: globalEventIdFromTest1
+    //   }});
+
   });
 
   // ✅ TASK: Run the last test 👆 alone (without running other tests). Does it pass now?
