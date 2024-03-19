@@ -12,6 +12,7 @@ const {
 } = require('../src/entry-points/sensors-api');
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const sinon = require('sinon');
+const SensorsService = require('../src/domain/sensors-service');
 
 let expressApp;
 
@@ -51,7 +52,7 @@ describe('Sensors test', () => {
       color: 'Green',
       weight: 80,
       status: 'active',
-      category: 'Kids-Room',
+      category: undefined,
       // 💡 TIP: Consider explicitly specify that category is undefined by assigning 'undefined'
     };
 
@@ -59,23 +60,59 @@ describe('Sensors test', () => {
 
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
-
+    const addSensorEventResp = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
     // Assert
 
     // 💡 TIP: Check that the received response is indeed as stated in the test name
     // 💡 TIP: Use this syntax for example: expect(receivedResponse.status).toBe(...);
+    expect(addSensorEventResp.status).toBe(400);
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, we get back a valid response
   // 💡 TIP: Consider checking both the HTTP status and the body
   test('When inserting a valid event, should get successful response', async () => {
     // Arrange
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+    };
     // Act
     // 💡 TIP: use any http client lib like Axios OR supertest
     // 💡 TIP: This is how it is done with Supertest -> await request(expressApp).post("/sensor-events").send(eventToAdd);
+    const addSensorEventResp = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
     // Assert
     // 💡 TIP: You may check the body and the status all together with the following syntax:
     // expect(receivedResponse).toMatchObject({status: 200, body: {...}});
+    // console.log(addSensorEventResp.body)
+    expect(addSensorEventResp).toMatchObject({
+      status: 200,
+      _body: {
+        id: expect.any(Number),
+        temperature: 20,
+        color: 'Green',
+        weight: 80,
+        status: 'active',
+        category: 'Kids-Room',
+        updatedAt: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/,
+        ),
+        createdAt: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/,
+        ),
+        reason: null,
+        latitude: null,
+        longtitude: null,
+        notificationSent: null,
+        notificationCategory: null,
+      },
+    });
   });
 
   // ✅ TASK: Test that when a new valid event is posted to /sensor-events route, it's indeed retrievable from the DB
@@ -84,6 +121,28 @@ describe('Sensors test', () => {
 
   // ✅ Keep the tests very short and readable, strive not to pass 7 statements per test
   // 💡 TIP: If it gets too long, extract obvious parts into an external helper
+  test('When a new valid event is posted to /sensor-events route, it is indeed retrievable from the DB', async () => {
+    //Arrange
+    let event = getSensorEvent();
+    // Act
+    const addSensorEventResp = await request(expressApp)
+      .post('/sensor-events')
+      .send(event);
+
+    // Assert
+    let eventId = addSensorEventResp.body.id;
+    const getSensorEventResp = await request(expressApp).get(
+      `/sensor-events/${eventId}`,
+    );
+
+    expect (getSensorEventResp).toMatchObject({
+      status: 200,
+      _body: {
+          ... event
+      }
+    })
+
+  });
 
   // ✅🚀 TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
@@ -93,8 +152,24 @@ describe('Sensors test', () => {
     // 💡 TIP: Use the library sinon to alter the behaviour of existing function and make it throw error
     //  https://sinonjs.org/releases/latest/stubs/
     // 💡 TIP: Here is the syntax: sinon.stub(someClass.prototype, 'methodName').rejects(new Error("Error explanation"));
+    const eventToAdd = {
+      temperature: 20,
+      color: 'Green',
+      weight: 80,
+      status: 'active',
+      category: 'Kids-Room',
+    };
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new Error('Error explanation'));
+
     // Act
+    const addSensorEventResp = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
     // Assert
+    expect(addSensorEventResp.statusCode).toBe(500);
   });
 
   // ✅ Ensure that the webserver is closed when all the tests are completed
