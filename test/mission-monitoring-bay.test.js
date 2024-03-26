@@ -169,8 +169,8 @@ describe('Sensors test', () => {
     Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
     */
     sinon
-    .stub(SensorsService.prototype, 'addEvent')
-    .rejects(new AppError('db-is-unaccessible', false, 500));
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', false, 500));
 
     // 💡 TIP: Listen here to the process.exit method to check later whether it was called
     if (process.exit.restore) {
@@ -180,8 +180,8 @@ describe('Sensors test', () => {
 
     // Act
     const receivedResult = await request(expressApp)
-    .post('/sensor-events')
-    .send(eventToAdd);
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check here whether process.exit was called
@@ -199,20 +199,53 @@ describe('Sensors test', () => {
     if (process.exit.restore) {
       process.exit.restore();
     }
+    const spyOnLogger = sinon.spy(console, 'error');
     const listenToProcessExit = sinon.stub(process, 'exit');
+
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', false, 500));
 
     // Act
     // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit(
+      'uncaughtException', new Error("random error"))
+
 
     // Assert
+    expect(listenToProcessExit.called).toBe(true);
+    expect(spyOnLogger.calledWithMatch({
+      message: 'random error'
+    })).toBe(true)
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
   // 💡 TIP: The event process.on('unhandledRejection' , yourCallBack) fires when a rejected promise is not caught error is not caught and will lead to
   // non-documented crash!
+  test('When unhandledRejection is thrown, then logger writes the mandatory fields and the process exits', async () => {
+    // Arrange
+    if (process.exit.restore) {
+      process.exit.restore();
+    }
+    const spyOnLogger = sinon.spy(console, 'error');
+    const listenToProcessExit = sinon.stub(process, 'exit');
+
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', false, 500));
+
+    // Act
+    // 💡 TIP: Explicitly make the process object throw an uncaught exception:
+    process.emit(
+      'unhandledRejection', new Error("random error"))
+
+
+    // Assert
+    expect(listenToProcessExit.called).toBe(true);
+    expect(spyOnLogger.calledWithMatch({
+      message: 'random error'
+    })).toBe(true)
+  });
 
   // ✅🚀 TASK: Check that for any type of error that is being thrown, whether a valid error object or number or anything else - Our
   //  error handler is capable of handling it
@@ -238,6 +271,9 @@ describe('Sensors test', () => {
         const eventToAdd = getSensorEvent();
 
         // 💡 TIP: make here some code throw the 'errorInstance' variable
+        sinon
+          .stub(SensorsService.prototype, 'addEvent')
+          .rejects(errorInstance);
 
         // 💡 TIP: We should listen here to the logger and metrics exporter - This is how we know that errors were handled
         const metricsExporterDouble = sinon.stub(metricsExporter, 'fireMetric');
@@ -245,9 +281,14 @@ describe('Sensors test', () => {
 
         //Act
         // 💡 TIP: Approach the API like in any other test
+        const receivedResult = await request(expressApp)
+        .post('/sensor-events')
+        .send(eventToAdd);
 
         //Assert
         // 💡 TIP: Check that the consoleErrorDouble, metricsExporterDouble were indeed called
+        expect(metricsExporterDouble.called).toBe(true);
+        expect(consoleErrorDouble.called).toBe(true);
       },
     );
   });
