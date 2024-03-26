@@ -14,15 +14,26 @@ let expressApp;
 
 beforeAll(async () => {
   expressApp = await startWebServer();
+  nock.disableNetConnect()
+  // Allow localhost connections so we can test local routes and mock servers.
+  nock.enableNetConnect('127.0.0.1')
 });
 
 afterAll(async () => {
   await stopWebServer();
+  nock.enableNetConnect();
 });
 
-beforeEach(() => {});
+beforeEach(() => {
+  nock('http://localhost')
+    .post('/notification/default')
+    .reply(200, { success: true })
+    .persist();
+});
 
-afterEach(() => {});
+afterEach(() => {
+  nock.cleanAll();
+});
 
 describe('Sensors test', () => {
   // ✅ TASK: Uncomment this test and run it. It will fail. Do you understand why?
@@ -32,13 +43,13 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent({ temperature: 60 });
 
     // 💡 TIP: Uncomment me to make this test fail and realize why
-    // // Act
-    // const receivedResponse = await request(expressApp)
-    //   .post('/sensor-events')
-    //   .send(eventToAdd);
+    // Act
+    const receivedResponse = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
-    // expect(receivedResponse.status).toBe(200);
+    expect(receivedResponse.status).toBe(200);
   });
 
   // ✅ TASK: Fix the failing test above 👆 which trigger a network call to a service that is not installed locally (notification)
@@ -63,17 +74,21 @@ describe('Sensors test', () => {
     // 💡 TIP: Since there is already a nock defined for this address, this new nock must has a unique address.
     // How to achieve this: The notification URL contains the notificationCategory, so you can generate unique notificationCategory
     // and the URL will have an address that is unique to this test
-    /*
-    nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
-        (payload) => (notificationPayload = payload),
-      ).reply(200, {success: true,});
-      */
+    const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+      (payload) => (notificationPayload = payload),
+    ).reply(200, { success: true, });
 
     // Act
+    await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: When defining a nock, it returns a scope object: const scope = nock(url).post(path)
     // You may call whether this URL was called using - scope.isDone()
+    expect(scope.isDone()).toBeTrue;
+    expect(notificationPayload).toMatchObject({ title: 'Something critical happened' });
+    expect(notificationPayload).toHaveProperty("id");
   });
 
   // ✅ TASK: In the test above that checks for notification, ensure that the request body was valid. Otherwise, our code
@@ -89,12 +104,23 @@ describe('Sensors test', () => {
       notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
     });
     // 💡 TIP: Set here a nock that replies with 500: nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`)
+    const scope = nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`,
+      (payload) => (notificationPayload = payload),
+    ).reply(500, { success: false, });
 
     // Act
+    const response = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
     // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
+    const receivedResponse = await request(expressApp).get(
+      `/sensor-events/${response.body.id}`,
+    );
+
+    expect(receivedResponse.status).toBe(200);
   });
 });
 
@@ -114,6 +140,30 @@ describe('Sensors test', () => {
 // 💡 TIP: Some code contains races between multiple tasks (e.g. Promise.race), for example when waiting for the request for sometime
 // and after sometime invoking alternative code. If the request will always bounce back too quick - The alternative path will never be tested
 // 💡 TIP: Nock is capable of simulating delays: nock(url).post(path).delay(timeInMillisecond)
+test('When emitting a new event and the notification service replies with 500 error, then the added event was still saved successfully', async () => {
+  // Arrange
+  const eventToAdd = getSensorEvent({
+    temperature: 80, //💡 TIP: We need high temperature to trigger notification
+    notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+  });
+  nock('http://localhost')
+    .post(
+      `/notification/${eventToAdd.notificationCategory}`,
+      (payload) => (notificationPayload = payload),
+    )
+    .delay(4000)
+    .reply(200);
+
+  // Act
+  const receivedResponse = await request(expressApp)
+    .post('/sensor-events')
+    .send(eventToAdd);
+
+  // Assert
+  expect(receivedResponse.status).toBe(200);
+  expect(notificationPayload).toMatchObject({ title: 'Something critical happened' });
+  expect(notificationPayload).toHaveProperty("id");
+});
 
 // ✅🚀 TASK: Write the same test like above 👆, but this time when the request is timed-out. In other words, when
 // the remote service does not reply at all, we are still able to progress and save the event
