@@ -36,7 +36,8 @@ beforeEach(() => {
     .persist();
   // 💡 TIP: This is needed because some of the errors that are triggered will cause the process to exit
   // For testing purposes only, we wish to avoid exiting
-  sinon.stub(process, 'exit');
+  // sinon.stub(process, 'exit');
+  jest.resetAllMocks();
 });
 //Good luck!!!
 afterEach(() => {
@@ -159,18 +160,20 @@ describe('Sensors test', () => {
   // non-documented crash!
   test('When uncaught exception is thrown, then logger writes the mandatory fields and the process exits', async () => {
     // Arrange
+    const uncaughtException = new Error('TEST UNCAUGHT EXCEPTION')
     if (process.exit.restore) {
       process.exit.restore();
     }
-    const listenToProcessExit = sinon.stub(process, 'exit');
+    const listenToConsoleError = jest.spyOn(console, 'error');
+    const listenToProcessExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
 
     // Act
     // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit('uncaughtException', uncaughtException);
 
     // Assert
+    expect(listenToConsoleError).toHaveBeenCalledWith(uncaughtException);
+    expect(listenToProcessExit).toHaveBeenCalled();
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
