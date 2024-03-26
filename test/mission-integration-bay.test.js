@@ -163,20 +163,17 @@ test('When emitting event and the notification service fails once, then a notifi
 
   const eventToAdd = getSensorEvent({
     temperature: 80,
-    notificationCategory: getShortUnique(),
   });
-  nock('http://localhost')
+  const notificationScope = nock('http://localhost')
       .post(`/notification/${eventToAdd.notificationCategory}`)
+      .times(1)
       .reply(500);
-  nock('http://localhost')
-      .post(`/notification/${eventToAdd.notificationCategory}`)
-      .reply(200, { success: true });
 
   const {
     body: { id },
   } = await request(expressApp).post('/sensor-events').send(eventToAdd);
-
   const getResponse = await request(expressApp).get(`/sensor-events/${id}`);
+
   expect(getResponse).toMatchObject({
     status: 200,
     body: { notificationSent: true },
