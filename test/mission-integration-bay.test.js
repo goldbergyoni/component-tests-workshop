@@ -161,3 +161,23 @@ test('When emitting event and the notification service fails once, then a notifi
 // 💡 TIP: Use jest-open-api tool to help with this mission:
 // https://www.npmjs.com/package/jest-openapi
 //💡 TIP: If you want to apply this to all tests, put this assertion as axios extension
+test('When response is not aligned with official doc, the test should fail', async () => {
+  const eventToAdd = getSensorEvent({
+    temperature: 80, //💡 TIP: We need high temperature to trigger notification
+    notificationCategory: getShortUnique(), //💡 TIP: Unique category will lead to unique notification URL. This helps in overriding the nock
+  });
+  nock('http://localhost').post(`/notification/${eventToAdd.notificationCategory}`).reply(200, { success: true })
+
+  // Act
+  const addEventResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+  // Assert
+  // 💡 TIP: It's not about the response rather about checking that it was indeed saved and retrievable
+  // 💡 TIP: Whenever possible always use a public API/REST and not a direct call the DB layer
+  const getEventResult = await request(expressApp)
+      .get('/sensor-events' + `/${addEventResult.body.id}`)
+
+  // Assert
+  expect(getEventResult).toSatisfyApiSpec()
+})
