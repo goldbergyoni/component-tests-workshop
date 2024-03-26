@@ -168,19 +168,27 @@ describe('Sensors test', () => {
     /*
     Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
     */
+    sinon
+    .stub(SensorsService.prototype, 'addEvent')
+    .rejects(new AppError('db-is-unaccessible', false, 500));
 
     // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
     if (process.exit.restore) {
       process.exit.restore();
     }
     const listenToProcessExit = sinon.stub(process, 'exit');
-    */
 
     // Act
+    const receivedResult = await request(expressApp)
+    .post('/sensor-events')
+    .send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check here whether process.exit was called
+    expect(listenToProcessExit.called).toBe(true);
+    expect(receivedResult).toMatchObject({
+      status: 500
+    })
   });
 
   // ✅🚀 TASK: Check that when uncaught error is thrown, the logger writes the mandatory fields and the process exits
