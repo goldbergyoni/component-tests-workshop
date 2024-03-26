@@ -16,6 +16,7 @@ const {
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
 const { AppError, metricsExporter } = require('../src/error-handling');
+const SensorsService = require("../src/domain/sensors-service");
 let expressApp;
 
 beforeAll(async () => {
@@ -59,6 +60,9 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult).toMatchObject({
+      status: 400
+    });
   });
 
   // ✅ TASK: Code the following test below
@@ -67,13 +71,21 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent();
     // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
     // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
-    sinon
-      .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
+
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
+
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    expect(receivedResult).toMatchObject({
+      status: 500
+    })
   });
 
   // ✅ TASK: Code the following test below
@@ -85,13 +97,33 @@ describe('Sensors test', () => {
 
     const spyOnLogger = sinon.spy(console, 'error');
 
+    const eventToAdd = getSensorEvent();
+
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
+
     // Act
+
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
     // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
+    expect(receivedResult).toMatchObject({
+      status: 500
+    })
+
+
+    expect(spyOnLogger.calledWithMatch({
+      name: "db-is-unaccessible",
+      isTrusted: true,
+      status: 500,
+    })).toBe(true);
   });
 
   // ✅ TASK: Code the following test below
@@ -102,8 +134,27 @@ describe('Sensors test', () => {
     // Arrange
     const eventToAdd = getSensorEvent();
 
+    const spyOnLogger = sinon.spy(metricsExporter, 'fireMetric');
+
     // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
     // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', true, 500));
+
+    // Act
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    expect(receivedResult).toMatchObject({
+      status: 500
+    })
+
+    expect(spyOnLogger.calledWithMatch('error', {
+      errorName: "db-is-unaccessible",
+    })).toBe(true);
   });
 
   // ✅🚀 TASK: Code the following test below
