@@ -3,8 +3,11 @@
 // ✅🚀 This symbol represents an advanced task
 // 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
 
-const request = require('supertest');
+
+const jestOpenAPI = require('jest-openapi').default;
 const nock = require('nock');
+const path = require('path');
+const request = require('supertest');
 const {
   startWebServer,
   stopWebServer,
@@ -12,18 +15,21 @@ const {
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 let expressApp;
 
+jestOpenAPI(path.resolve(__dirname, './../src/openapi.json'));
+
 beforeAll(async () => {
   expressApp = await startWebServer();
-  // I don't think we need this if we are always using the event to adds category
-  nock(`http://localhost`).post(`/notification/default`).reply(200, { success: true })
   nock.disableNetConnect();
 });
 
 afterAll(async () => {
+  nock.enableNetConnect();
   await stopWebServer();
 });
 
 beforeEach(() => {
+  // I don't think we need this if we are always using the event to adds category
+  nock(`http://localhost`).post(`/notification/default`).reply(200, { success: true })
   nock.enableNetConnect(
       host => host.includes('localhost') || host.includes('127.0.0.1'),
   );
@@ -150,10 +156,31 @@ describe('Sensors test', () => {
 
 // ✅🚀 TASK: Write the following test below
 // 💡 TIP: This test is about an important Microservice concept: resiliency (retrying requests)
-test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', () => {
+test('When emitting event and the notification service fails once, then a notification is still being retried and sent successfully', async () => {
   // 💡 TIP: Make nock return an error response once, then make it succeed in the 2nd time
   // 💡 TIP: Syntax: nock(url).post(path).times(1).reply(500)
   // 💡 TIP: The code has retry mechanism built-in, check your test by removing it (sensors-api.js, axiosRetry) and see the test failing
+
+  const eventToAdd = getSensorEvent({
+    temperature: 80,
+    notificationCategory: getShortUnique(),
+  });
+  nock('http://localhost')
+      .post(`/notification/${eventToAdd.notificationCategory}`)
+      .reply(500);
+  nock('http://localhost')
+      .post(`/notification/${eventToAdd.notificationCategory}`)
+      .reply(200, { success: true });
+
+  const {
+    body: { id },
+  } = await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+  const getResponse = await request(expressApp).get(`/sensor-events/${id}`);
+  expect(getResponse).toMatchObject({
+    status: 200,
+    body: { notificationSent: true },
+  });
 });
 
 // ✅🚀 TASK: Ensure that if a response is not aligned with the OpenAPI (Swagger), then the tests will catch this issue
