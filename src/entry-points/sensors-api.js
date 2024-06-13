@@ -69,7 +69,14 @@ function defineAllRoutes(expressApp) {
   router.get('/sensor-events/:id', async (req, res, next) => {
     const sensorsService = new SensorsService();
     const sensorToReturn = await sensorsService.getSensorById(req.params.id);
-    res.json(sensorToReturn);
+
+    let returnedHTTPStatus = 200;
+
+    if(!sensorToReturn) {
+      returnedHTTPStatus = 404
+    }
+
+    res.status(returnedHTTPStatus).json(sensorToReturn);
   });
 
   router.delete('/sensor-events/:id', async (req, res, next) => {
