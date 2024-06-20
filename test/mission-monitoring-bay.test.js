@@ -7,6 +7,7 @@
 const request = require('supertest');
 const nock = require('nock');
 const sinon = require('sinon');
+// const SensorsService = require('../domain/sensors-service');
 
 const {
   startWebServer,
@@ -16,6 +17,7 @@ const {
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
 const { AppError, metricsExporter } = require('../src/error-handling');
+const { expectation } = require('sinon');
 let expressApp;
 
 beforeAll(async () => {
@@ -59,6 +61,7 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400)
   });
 
   // ✅ TASK: Code the following test below
@@ -74,6 +77,19 @@ describe('Sensors test', () => {
     */
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+
+    // sinon
+    //   .stub(sensorsService.prototype, 'someMethod')
+    //   .rejects(new AppError('db-is-unaccessible', true, 500));
+
+    // Act
+    // const receivedResult = await request(expressApp)
+    //   .post('/sensor-events')
+    //   .send(eventToAdd);
+    //
+    // // Assert
+    // expect(receivedResult.status).toBe(400)
+
   });
 
   // ✅ TASK: Code the following test below
