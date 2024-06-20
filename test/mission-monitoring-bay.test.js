@@ -1,9 +1,3 @@
-// 🏅 Your mission is to create your first integration tests here 💜
-// 🏝 Monitoring island
-// ✅ Whenever you see this icon, there's a TASK for you
-// ✅🚀 This symbol represents an advanced task
-// 💡 - This is an ADVICE symbol, it will appear nearby most tasks and help you in fulfilling the tasks
-
 const request = require('supertest');
 const nock = require('nock');
 const sinon = require('sinon');
@@ -13,9 +7,11 @@ const {
   stopWebServer,
 } = require('../src/entry-points/sensors-api');
 
-const { getShortUnique, getSensorEvent } = require('./test-helper');
+const { getSensorEvent } = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
 const { AppError, metricsExporter } = require('../src/error-handling');
+const SensorsService = require('../src/domain/sensors-service');
+const { Error } = require('sequelize');
 let expressApp;
 
 beforeAll(async () => {
@@ -33,9 +29,6 @@ beforeEach(() => {
       success: true,
     })
     .persist();
-  // 💡 TIP: This is needed because some of the errors that are triggered will cause the process to exit
-  // For testing purposes only, we wish to avoid exiting
-  sinon.stub(process, 'exit');
 });
 //Good luck!!!
 afterEach(() => {
@@ -43,14 +36,8 @@ afterEach(() => {
   nock.cleanAll();
 });
 
-describe('Sensors test', () => {
-  // ✅ TASK: Code the following test below
-  // 💡 TIP: Researches show that the vast majority of production downtime are caused by incorrect error handling
-  // There are few things that are as important as testing your error handling
+describe('Monitoring tests', () => {
   test('When adding an event without category, Then get back error 400', async () => {
-    // Arrange
-    // 💡 TIP: See below how we explicitly define and emphasize what's wrong with the input
-    // 💡 TIP: When using external helpers, make it clear for the test reader what is happening
     const eventToAdd = getSensorEvent({ category: undefined });
 
     // Act
@@ -59,77 +46,80 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400);
   });
 
-  // ✅ TASK: Code the following test below
   test('When an internal unknown error occurs during request, Then get back 500 error', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
-    // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
-    // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
     sinon
-      .stub(someClass.prototype, 'someMethod')
-      .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
-    // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
-    //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new Error('Error!'));
+
+    // Act
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+
+    // Assert
+    expect(receivedResult.status).toBe(500);
   });
 
-  // ✅ TASK: Code the following test below
-  // 💡 TIP: Typically we try to avoid mocking our own code. However, this is necessary for testing error handling
-  // and a good case to make an exception for
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
     // Arrange
-    // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
-
+    const eventToAdd = getSensorEvent();
+    const error = new Error('this specific error');
+    sinon.stub(SensorsService.prototype, 'addEvent').rejects(error);
     const spyOnLogger = sinon.spy(console, 'error');
 
     // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
 
     // Assert
-    // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
-    // https://sinonjs.org/releases/latest/spies/
-    // 💡 TIP: Check not only that the logger was called but also with the right properties
-    // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
+    expect(spyOnLogger.calledOnce).toBe(true);
+    expect(spyOnLogger.args[0]).toMatchObject([error]);
   });
 
-  // ✅ TASK: Code the following test below
-  // 💡 TIP: Metrics are one of the core technique to properly monitor a component - Whenever anything significant
-  // is happening, the code emits a metric object which arrives to the monitoring service. Testing that metrics are
-  // indeed fired is critical
   test('When an internal error occurs during request, Then a metric is fired', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new Error('Error'));
+    const spyOnMetricsExporter = sinon.spy(metricsExporter, 'fireMetric');
 
-    // 💡 TIP: Use Sinon here to listen to the metricsExporter object, see the file: src/error-handling, it has a class 'metricsExporter'
-    // 💡 TIP: This is very similar to the last test, only now instead of listening to the logger - We should listen to the metric exporter
+    // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+
+    // Assert
+    expect(spyOnMetricsExporter.calledOnce).toBe(true);
+    expect(spyOnMetricsExporter.args[0]).toMatchObject([
+      'error',
+      { errorName: 'SequelizeBaseError' },
+    ]);
   });
 
-  // ✅🚀 TASK: Code the following test below
-  // 💡 TIP: In Node.js, it's common to distinguish between Trusted vs Non-trusted errors. The former are casual errors that
-  // happen during requests. The later, are fatal error that might hint that the process is in a bad state -> In this case the error
-  // handler usually make the process exit
   test('When an internal NON-TRUSTED error occurs during request, Then the process exits', async () => {
     // Arrange
     const eventToAdd = getSensorEvent();
-    // 💡 TIP: Trigger an error here like the tests above, tag the error as non-trusted
-    /*
-    Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
-    */
-
-    // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
-    if (process.exit.restore) {
-      process.exit.restore();
-    }
+    sinon
+      .stub(SensorsService.prototype, 'addEvent')
+      .rejects(new AppError('db-is-unaccessible', false, 500));
     const listenToProcessExit = sinon.stub(process, 'exit');
-    */
+    // TODO: Why can't I do the same with these stubs + .get('/sensor-events')?
+    // sinon
+    //   .stub(SensorsService.prototype, 'getAllEvents')
+    //   .rejects(new Error('Error'));
+    // sinon
+    //   .stub(SensorsRepository.prototype, 'getAllEvents')
+    //   .rejects(new AppError('db-is-unaccessible', false, 500));
 
     // Act
+    await request(expressApp).post('/sensor-events').send(eventToAdd);
+    // await request(expressApp).get('/sensor-events');
 
     // Assert
-    // 💡 TIP: Check here whether process.exit was called
+    expect(listenToProcessExit.calledOnce).toBe(true);
   });
 
   // ✅🚀 TASK: Check that when uncaught error is thrown, the logger writes the mandatory fields and the process exits
@@ -137,18 +127,16 @@ describe('Sensors test', () => {
   // non-documented crash!
   test('When uncaught exception is thrown, then logger writes the mandatory fields and the process exits', async () => {
     // Arrange
-    if (process.exit.restore) {
-      process.exit.restore();
-    }
     const listenToProcessExit = sinon.stub(process, 'exit');
 
     // Act
-    // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit(
+      'uncaughtException',
+      new AppError('uncaught exception', false, 500),
+    );
 
     // Assert
+    expect(listenToProcessExit.calledOnce).toBe(true);
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
