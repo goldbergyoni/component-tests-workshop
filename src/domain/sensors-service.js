@@ -1,5 +1,5 @@
 const axios = require('axios');
-const axiosRetry = require('axios-retry');
+const axiosRetry = require('axios-retry').default;
 const sanitizeService = require('../domain/sanitize-service');
 const SensorsDal = require('../data-access/sensors-repository');
 const { AppError } = require('../error-handling');
@@ -54,9 +54,8 @@ class SensorsEventService {
     }
 
     const sensorsRepository = new SensorsDal();
-    const fullEventInfo = await sensorsRepository.addSensorsEvent(
-      eventToHandle,
-    );
+    const fullEventInfo =
+      await sensorsRepository.addSensorsEvent(eventToHandle);
     await new MessageQueueClient().publish(
       'analytics.events',
       'analytics.new',
