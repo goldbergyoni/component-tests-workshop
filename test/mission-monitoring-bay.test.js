@@ -16,6 +16,7 @@ const {
 const { getShortUnique, getSensorEvent } = require('./test-helper');
 const SensorsRepository = require('../src/data-access/sensors-repository');
 const { AppError, metricsExporter } = require('../src/error-handling');
+const SensorsEventService = require('../src/domain/sensors-service');
 let expressApp;
 
 beforeAll(async () => {
@@ -35,7 +36,8 @@ beforeEach(() => {
     .persist();
   // 💡 TIP: This is needed because some of the errors that are triggered will cause the process to exit
   // For testing purposes only, we wish to avoid exiting
-  sinon.stub(process, 'exit');
+  // sinon.stub(process, 'exit');
+  jest.resetAllMocks();
 });
 //Good luck!!!
 afterEach(() => {
@@ -59,6 +61,7 @@ describe('Sensors test', () => {
       .send(eventToAdd);
 
     // Assert
+    expect(receivedResult.status).toBe(400);
   });
 
   // ✅ TASK: Code the following test below
@@ -67,13 +70,19 @@ describe('Sensors test', () => {
     const eventToAdd = getSensorEvent();
     // 💡 TIP: Let's make some internal method throw an error, this concept is called "Test doubles" or "Mocking"
     // 💡 TIP: Use the library sinon or jest to stub/mock some internal function and make it return an error. Example:
-    /*
     sinon
-      .stub(someClass.prototype, 'someMethod')
+      .stub(SensorsEventService.prototype, 'addEvent')
       .rejects(new AppError('db-is-unaccessible', true, 500)); 
-    */
     // 💡 TIP: Replace here above 👆 'someClass' with one the code internal classes like the sensors service or DAL
     //   Replace 'someMethod' with a method of this class that is called during adding flow. Choose an async method
+
+    // Act
+    const receivedResult = await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
+  
+    // Assert
+    expect(receivedResult.status).toBe(500);
   });
 
   // ✅ TASK: Code the following test below
@@ -82,16 +91,24 @@ describe('Sensors test', () => {
   test('When an internal error occurs during request, Then the logger writes the right error', async () => {
     // Arrange
     // 💡 TIP: We use Sinon, test doubles library, to listen ("spy") to the logger and ensure that it was indeed called
-
-    const spyOnLogger = sinon.spy(console, 'error');
+    const eventToAdd = getSensorEvent();
+    const internalError = new AppError('db-is-unaccessible', true, 500)
+    sinon
+      .stub(SensorsEventService.prototype, 'addEvent')
+      .rejects(internalError); 
+    const spyOnLogger = jest.spyOn(console, 'error');
 
     // Act
+    await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 Use the variable 'spyOnLogger' to verify that the console.error was indeed called. If not sure how, check Sinon spy documentation:
     // https://sinonjs.org/releases/latest/spies/
     // 💡 TIP: Check not only that the logger was called but also with the right properties
     // 💡 TIP: In real-world code we don't use the Console for logging. However the testing techniques would be the same
+    expect(spyOnLogger).toHaveBeenCalledWith(internalError)
   });
 
   // ✅ TASK: Code the following test below
@@ -117,19 +134,25 @@ describe('Sensors test', () => {
     /*
     Make the DAL throw this error: new AppError('db-is-unaccessible', false, 500)
     */
+    const internalError = new AppError('db-is-unaccessible', false, 500)
+    sinon
+      .stub(SensorsEventService.prototype, 'addEvent')
+      .rejects(internalError); 
 
     // 💡 TIP: Listen here to the process.exit method to check later whether it was called
-    /*
-    if (process.exit.restore) {
-      process.exit.restore();
-    }
-    const listenToProcessExit = sinon.stub(process, 'exit');
-    */
+    // if (process.exit.restore) {
+    //   process.exit.restore();
+    // }
+    const listenToProcessExit = jest.spyOn(process, 'exit').mockImplementation();
 
     // Act
+    await request(expressApp)
+      .post('/sensor-events')
+      .send(eventToAdd);
 
     // Assert
     // 💡 TIP: Check here whether process.exit was called
+    expect(listenToProcessExit).toHaveBeenCalledTimes(1);
   });
 
   // ✅🚀 TASK: Check that when uncaught error is thrown, the logger writes the mandatory fields and the process exits
@@ -137,18 +160,20 @@ describe('Sensors test', () => {
   // non-documented crash!
   test('When uncaught exception is thrown, then logger writes the mandatory fields and the process exits', async () => {
     // Arrange
+    const uncaughtException = new Error('TEST UNCAUGHT EXCEPTION')
     if (process.exit.restore) {
       process.exit.restore();
     }
-    const listenToProcessExit = sinon.stub(process, 'exit');
+    const listenToConsoleError = jest.spyOn(console, 'error');
+    const listenToProcessExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
 
     // Act
     // 💡 TIP: Explicitly make the process object throw an uncaught exception:
-    // process.emit(
-    //  'uncaughtException', define an error object here)
-    //
+    process.emit('uncaughtException', uncaughtException);
 
     // Assert
+    expect(listenToConsoleError).toHaveBeenCalledWith(uncaughtException);
+    expect(listenToProcessExit).toHaveBeenCalled();
   });
 
   // ✅🚀 TASK: Check the same like above, but for unhandled rejections (throw unhandledRejection, ensure the process and logger behaves as expected)
