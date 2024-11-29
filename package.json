@@ -6,7 +6,7 @@
   "scripts": {
     "start": "./src/index.js",
     "test": "jest --reporters=default --reporters=jest-junit",
-    "test:dev": "jest --watch --silent --runInBand",
+    "test:dev": "jest --watch --silent --maxWorkers=0",
     "test:dev:migrate": "DO_MIGRATION='true' jest --watch --silent --runInBand",
     "test:dev:verbose": "jest --watch --runInBand --verbose",
     "lint": "eslint .",
